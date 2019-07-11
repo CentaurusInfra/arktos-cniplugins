@@ -1,5 +1,5 @@
 # neubernetes
-cni plugin integrating neutron to kubernetes
+[cni](https://github.com/containernetworking/cni/blob/master/SPEC.md) plugin integrating [neutron](https://github.com/openstack/neutron) to [kubernetes](https://github.com/kubernetes/kubernetes)
 
 ## target cni version
 0.3.1
