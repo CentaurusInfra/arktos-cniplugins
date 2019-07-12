@@ -21,5 +21,5 @@ func cmdCheck(args *skel.CmdArgs) error {
 
 func main() {
 	supportVersions := version.PluginSupports("0.1.0", "0.2.0", "0.3.0", "0.3.1")
-	skel.PluginMain(cmdAdd, cmdCheck, cmdDel, supportVersions, "neubernetes")
+	skel.PluginMain(cmdAdd, cmdCheck, cmdDel, supportVersions, "alktron")
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func TestVersion(t *testing.T) {
-	pathToBin, err := gexec.Build("github.com/futurewei-cloud/neubernetes")
+	pathToBin, err := gexec.Build("github.com/futurewei-cloud/alktron")
 	if err != nil {
 		t.Fatalf("failed to build binary: %v", err)
 	}
