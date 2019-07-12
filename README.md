@@ -1,5 +1,5 @@
-# neubernetes
-[cni](https://github.com/containernetworking/cni/blob/master/SPEC.md) plugin integrating [neutron](https://github.com/openstack/neutron) to [kubernetes](https://github.com/kubernetes/kubernetes)
+# alktron
+[cni](https://github.com/containernetworking/cni/blob/master/SPEC.md) plugin integrating [alkaid](https://github.com/futurewei-cloud/alkaid.git) with [neutron](https://github.com/openstack/neutron)
 
 ## target cni version
 0.3.1
