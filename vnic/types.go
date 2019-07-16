@@ -18,7 +18,7 @@ type Args struct {
 
 // VNIC contains individual vNic's port id and interface name
 type VNIC struct {
-	NIC    string `json:"nic,omitempty"`
+	Name   string `json:"name,omitempty"`
 	PortID string `json:"portid"`
 }
 
@@ -53,8 +53,8 @@ func LoadVNICs(cniargs string) (*VNICs, error) {
 			return nil, fmt.Errorf("invlid nic definition at index %d in nics %s: empty portid", i, args.NICs)
 		}
 
-		if nic.NIC == "" {
-			nics[i].NIC = "eth" + strconv.Itoa(i)
+		if nic.Name == "" {
+			nics[i].Name = "eth" + strconv.Itoa(i)
 		}
 	}
 
