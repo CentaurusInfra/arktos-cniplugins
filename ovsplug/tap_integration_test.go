@@ -22,8 +22,7 @@ func TestTapCreateAndChangeMAC(t *testing.T) {
 
 	mac, _ := net.ParseMAC("00:12:34:56:78:AB")
 
-	tap := &ovsplug.Tap{Name: tapName}
-	err := tap.Create(&mac)
+	tap, err := ovsplug.NewTap(tapName, &mac)
 	if err != nil {
 		t.Fatalf("unpected error: %v", err)
 	}

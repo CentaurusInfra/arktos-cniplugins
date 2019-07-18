@@ -12,15 +12,14 @@ import (
 // sudo -E go test ./... -tags=integration -v -run Veth to run this integration test set
 // need to set TEST_VETH_XXX env var, otherwise skipped
 
-func TestVethCreateAndUp(t *testing.T) {
+func TestVethNewAndUp(t *testing.T) {
 	vetha := os.Getenv("TEST_VETH_A")
 	vethb := os.Getenv("TEST_VETH_B")
 	if vetha == "" || vethb == "" {
 		t.Skipf("Skipping due to lack of TEST_VETH_A & TEST_VETH_B env vars")
 	}
 
-	vethPair := ovsplug.Veth{}
-	err := vethPair.Create(vetha, vethb)
+	vethPair, err := ovsplug.NewVeth(vetha, vethb)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)

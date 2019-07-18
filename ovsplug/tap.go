@@ -13,13 +13,9 @@ type Tap struct {
 	Name string
 }
 
-// Create creates a tap device with specific mac address on the local host
-func (t *Tap) Create(mac *net.HardwareAddr) error {
-	if t.BridgePort.NetlinkDev != nil {
-		return fmt.Errorf("tap %q already created", t.Name)
-	}
-
-	la := netlink.LinkAttrs{Name: t.Name}
+// NewTap creates a tap device with specific name and mac address on the local host
+func NewTap(name string, mac *net.HardwareAddr) (*Tap, error) {
+	la := netlink.LinkAttrs{Name: name}
 	if mac != nil {
 		la.HardwareAddr = *mac
 	}
@@ -31,30 +27,32 @@ func (t *Tap) Create(mac *net.HardwareAddr) error {
 	}
 
 	if err := netlink.LinkAdd(tuntap); err != nil {
-		return fmt.Errorf("failed to create tap %q: %v", t.Name, err)
+		return nil, fmt.Errorf("failed to create tap %q: %v", name, err)
 	}
 
-	dev, err := netlink.LinkByName(t.Name)
+	dev, err := netlink.LinkByName(name)
 	if err != nil {
-		return fmt.Errorf("post-create failure on creating tap %q: %v", t.Name, err)
+		return nil, fmt.Errorf("post-create failure on creating tap %q: %v", name, err)
 	}
 
 	// LinkAdd seems unable to set mac address properly; need separate mac update
 	if mac != nil {
 		if err = netlink.LinkSetHardwareAddr(dev, *mac); err != nil {
 			// todo: cleanup - remove faulty tap dev
-			return fmt.Errorf("post-create failure on %q mac addr update: %v", t.Name, err)
+			return nil, fmt.Errorf("post-create failure on %q mac addr update: %v", name, err)
 		}
 	}
 
-	dev, err = netlink.LinkByName(t.Name)
+	dev, err = netlink.LinkByName(name)
 	if err != nil {
 		// todo: cleanup - remove faulty tap dev
-		return fmt.Errorf("post-create failure on getting tap %q link: %v", t.Name, err)
+		return nil, fmt.Errorf("post-create failure on getting tap %q link: %v", name, err)
 	}
 
-	t.BridgePort = BridgePort{NetlinkDev: &dev}
-	return nil
+	return &Tap{
+		Name:       name,
+		BridgePort: BridgePort{NetlinkDev: &dev},
+	}, nil
 }
 
 // todo: add Remove method

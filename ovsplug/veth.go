@@ -18,29 +18,29 @@ type Veth struct {
 	PeerEP *VethEP
 }
 
-// Create creates veth pair having specific names
-func (v *Veth) Create(name, peerName string) error {
+// NewVeth creates a new veth pair having specific endpoint names
+func NewVeth(name, peerName string) (*Veth, error) {
 	veth := &netlink.Veth{
 		LinkAttrs: netlink.LinkAttrs{Name: name},
 		PeerName:  peerName,
 	}
 
 	if err := netlink.LinkAdd(veth); err != nil {
-		return fmt.Errorf("failed to create veth pair (%q, %q): %v", name, peerName, err)
+		return nil, fmt.Errorf("failed to create veth pair (%q, %q): %v", name, peerName, err)
 	}
 
-	v.EP = getVethEP(name)
-	v.PeerEP = getVethEP(peerName)
-	if v.EP == nil && v.PeerEP == nil {
-		if v.EP != nil {
-			netlink.LinkDel(*v.EP.BridgePort.NetlinkDev)
-		} else if v.PeerEP != nil {
-			netlink.LinkDel(*v.PeerEP.BridgePort.NetlinkDev)
+	ep := getVethEP(name)
+	peer := getVethEP(peerName)
+	if ep == nil || peer == nil {
+		if ep != nil {
+			netlink.LinkDel(*ep.BridgePort.NetlinkDev)
+		} else if peer != nil {
+			netlink.LinkDel(*peer.BridgePort.NetlinkDev)
 		}
-		return fmt.Errorf("post-create failure on creating veth pair (%q, %q): unable to retrieve endpoints", name, peerName)
+		return nil, fmt.Errorf("post-create failure on creating veth pair (%q, %q): unable to retrieve endpoints", name, peerName)
 	}
 
-	return nil
+	return &Veth{EP: ep, PeerEP: peer}, nil
 }
 
 // todo: add Remove method

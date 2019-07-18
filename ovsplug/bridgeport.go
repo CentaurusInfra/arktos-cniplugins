@@ -13,7 +13,7 @@ type BridgePort struct {
 }
 
 // JoinLinuxBridge joins the local linux bridge
-func (bp BridgePort) JoinLinuxBridge(br LinuxBridge) error {
+func (bp *BridgePort) JoinLinuxBridge(br LinuxBridge) error {
 	if err := netlink.LinkSetMaster(*bp.NetlinkDev, br.bridge); err != nil {
 		return fmt.Errorf("failed to join bridge %q: %v", br.Name, err)
 	}
