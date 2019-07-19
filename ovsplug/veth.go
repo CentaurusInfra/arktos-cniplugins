@@ -58,3 +58,8 @@ func getVethEP(name string) *VethEP {
 		BridgePort: BridgePort{NetlinkDev: &dev},
 	}
 }
+
+// GetName gets name
+func (ep VethEP) GetName() string {
+	return ep.Name
+}
