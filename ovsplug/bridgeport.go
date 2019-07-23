@@ -12,15 +12,6 @@ type BridgePort struct {
 	NetlinkDev *netlink.Link
 }
 
-// JoinLinuxBridge joins the local linux bridge
-func (bp *BridgePort) JoinLinuxBridge(br LinuxBridge) error {
-	if err := netlink.LinkSetMaster(*bp.NetlinkDev, br.bridge); err != nil {
-		return fmt.Errorf("failed to join bridge %q: %v", br.Name, err)
-	}
-
-	return nil
-}
-
 // SetUp enables the link device
 func (bp *BridgePort) SetUp() error {
 	return netlink.LinkSetUp(*bp.NetlinkDev)

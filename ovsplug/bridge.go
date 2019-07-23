@@ -62,5 +62,19 @@ func (br *LinuxBridge) SetUp() error {
 	return netlink.LinkSetUp(*br.linkDev)
 }
 
+// AddPort adds a port with specified name to the linux bridge (as brctl addif does)
+func (br *LinuxBridge) AddPort(port string) error {
+	portDev, err := netlink.LinkByName(port)
+	if err != nil {
+		return fmt.Errorf("failed with retrieval of %q: %v", port, err)
+	}
+
+	if err := netlink.LinkSetMaster(portDev, br.bridge); err != nil {
+		return fmt.Errorf("bridge %q failed to add %q: %v", br.Name, port, err)
+	}
+
+	return nil
+}
+
 // todo: add Remove method
 // todo: add SetDown method
