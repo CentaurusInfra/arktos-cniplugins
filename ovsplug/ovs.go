@@ -20,4 +20,9 @@ func (b OVSBridge) AddPort(port string) error {
 	return c.VSwitch.AddPort(b.Name, port)
 }
 
+// GetName gets the local Linux bridge name
+func (b OVSBridge) GetName() string {
+	return b.Name
+}
+
 // todo: add DelPort method

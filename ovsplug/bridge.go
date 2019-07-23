@@ -76,5 +76,10 @@ func (br *LinuxBridge) AddPort(port string) error {
 	return nil
 }
 
+// GetName gets the local Linux bridge name
+func (br *LinuxBridge) GetName() string {
+	return br.Name
+}
+
 // todo: add Remove method
 // todo: add SetDown method
