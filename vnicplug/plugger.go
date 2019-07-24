@@ -119,6 +119,7 @@ func (p Plugger) ensureStatusActive(portID string) error {
 			break
 		}
 
+		// todo: add period time config to avoid hardcoded value
 		<-time.After(1 * time.Second)
 		portDetail, err = p.PortGetBinder.GetPort(portID)
 	}
