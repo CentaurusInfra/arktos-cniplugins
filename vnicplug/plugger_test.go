@@ -51,12 +51,12 @@ func (m *mockLocalPlugger) GetLocalBridge() string {
 	return args.String(0)
 }
 
-type mockDevNetnsPlugger struct {
+type mockDevNetnsManager struct {
 	mock.Mock
 }
 
-func (m *mockDevNetnsPlugger) Plug(name, mac string, cidr *net.IPNet, gw *net.IP, netns, hostBr string) error {
-	args := m.Called(name, mac, cidr, gw, netns, hostBr)
+func (m *mockDevNetnsManager) Attach(dev string, mac net.HardwareAddr, ipnet *net.IPNet, gw *net.IP, prio int, hostBr string) error {
+	args := m.Called(dev, mac, ipnet, gw, prio, hostBr)
 	return args.Error(0)
 }
 
@@ -65,12 +65,13 @@ func TestPlug(t *testing.T) {
 	devID := "vm-id"
 
 	qbr := "qbr12345678"
-	netns := "dummy_ns"
 	portID := "12345678"
 	nicName := "tap-dev"
 	subnetID := "subnet-id"
 	mac := "11:22:33:44:55:66"
+	macaddr, _ := net.ParseMAC(mac)
 	gw, ipv4Net, _ := net.ParseCIDR("10.0.0.1/24")
+	routePrio := 100
 	ipnet := &net.IPNet{
 		IP:   net.ParseIP("10.0.0.4"),
 		Mask: ipv4Net.Mask,
@@ -102,20 +103,19 @@ func TestPlug(t *testing.T) {
 
 	mockLocalPlugger := &mockLocalPlugger{}
 	mockLocalPlugger.On("Plug").Return(nil)
-	mockLocalPlugger.On("GetLocalBridge").Return(qbr)
 
 	hybridPlugGen := func(portID, mac, vm string) (ovsplug.LocalPlugger, error) {
 		return mockLocalPlugger, nil
 	}
 
-	mockDevNetnsPlugger := &mockDevNetnsPlugger{}
-	mockDevNetnsPlugger.On("Plug", nicName, mac, ipnet, &gw, netns, qbr).Return(nil)
+	mockDevNetnsManager := &mockDevNetnsManager{}
+	mockDevNetnsManager.On("Attach", nicName, macaddr, ipnet, &gw, routePrio, qbr).Return(nil)
 
 	plugger := vnicplug.Plugger{
 		PortGetBinder:   mockPortGetBinder,
 		SubnetGetter:    mockSubnetGetter,
 		HybridPlugGen:   hybridPlugGen,
-		DevNetnsPlugger: mockDevNetnsPlugger,
+		DevNetnsPlugger: mockDevNetnsManager,
 	}
 
 	vnic := vnic.VNIC{
@@ -130,7 +130,7 @@ func TestPlug(t *testing.T) {
 		IPv4Net: ipnet,
 	}
 
-	epNIC, err := plugger.Plug(&vnic, devID, boundHost, netns)
+	epNIC, err := plugger.Plug(&vnic, devID, boundHost, routePrio, qbr)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -143,5 +143,5 @@ func TestPlug(t *testing.T) {
 	mockSubnetGetter.AssertExpectations(t)
 	mockLocalPlugger.AssertExpectations(t)
 	mockPortGetBinder.AssertExpectations(t)
-	mockDevNetnsPlugger.AssertExpectations(t)
+	mockDevNetnsManager.AssertExpectations(t)
 }

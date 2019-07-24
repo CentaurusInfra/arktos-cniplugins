@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/futurewei-cloud/alktron/neutron"
+	"github.com/futurewei-cloud/alktron/nsvtep"
 	"github.com/futurewei-cloud/alktron/ovsplug"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 
@@ -37,10 +38,10 @@ type LocalHostPlugger interface {
 	Plug() error
 }
 
-// DevNetnsPlugger is the interface which plugs endpoint device
+// DevNetnsManager is the interface which manages (attaches) endpoint device
 // inside specified netns connecting to the local host bridge
-type DevNetnsPlugger interface {
-	Plug(name, mac string, ipnet *net.IPNet, gw *net.IP, netns, hostBr string) error
+type DevNetnsManager interface {
+	Attach(dev string, mac net.HardwareAddr, ipnet *net.IPNet, gw *net.IP, prio int, hostBr string) error
 }
 
 // Plugger represents the vnic plugger which does all the steps to turn vnic into
@@ -49,21 +50,23 @@ type Plugger struct {
 	PortGetBinder   PortGetBinder
 	SubnetGetter    SubnetGetter
 	HybridPlugGen   func(portID, mac, vm string) (ovsplug.LocalPlugger, error)
-	DevNetnsPlugger DevNetnsPlugger
+	DevNetnsPlugger DevNetnsManager
 }
 
 // NewPlugger creates the Plugger applicable to Neutron ML2 ovs_hybrid_plug env
-func NewPlugger(neutronClient *neutron.Client, mac, devID string) *Plugger {
+func NewPlugger(neutronClient *neutron.Client, mac, devID, nspath string) *Plugger {
 	return &Plugger{
 		PortGetBinder:   neutronClient,
 		SubnetGetter:    neutronClient,
 		HybridPlugGen:   ovsplug.NewHybridPlug,
-		DevNetnsPlugger: nil, //todo: add valid implementation
+		DevNetnsPlugger: nsvtep.NewManager(nspath),
 	}
 }
 
 // Plug plugs vnic and makes the endpoint present in the target netns
-func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost, netns string) (*EPnic, error) {
+func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int, hostBr string) (*EPnic, error) {
+	// todo: add proper cleanup code in case of error
+
 	portID := vnic.PortID
 	// todo: check port status to see if it is used already by other devID
 	// todo: check port status to see if it is already ready for this devID
@@ -74,8 +77,12 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost, netns string) (*EPnic, 
 	}
 
 	// ovs hybrid plug to construct qbr-qvb-qvo-brint
-	mac := bindingDetail.MACAddress
-	ovshybridplug, err := p.HybridPlugGen(portID, mac, devID)
+	mac, err := net.ParseMAC(bindingDetail.MACAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to plug vnic on port binding; port has invalid mac address: %v", err)
+	}
+
+	ovshybridplug, err := p.HybridPlugGen(portID, mac.String(), devID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to plug vnic on ovs hybrid creation: %v", err)
 	}
@@ -91,7 +98,7 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost, netns string) (*EPnic, 
 	}
 
 	// make the endpoint nic inside netns, and add it to qbr
-	if err = p.DevNetnsPlugger.Plug(vnic.Name, mac, ipnet, gw, netns, ovshybridplug.GetLocalBridge()); err != nil {
+	if err = p.DevNetnsPlugger.Attach(vnic.Name, mac, ipnet, gw, routePrio, hostBr); err != nil {
 		return nil, err
 	}
 
@@ -101,7 +108,7 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost, netns string) (*EPnic, 
 
 	return &EPnic{
 		Name:    vnic.Name,
-		MAC:     mac,
+		MAC:     mac.String(),
 		IPv4Net: ipnet,
 		Gw:      gw,
 	}, nil
