@@ -20,8 +20,15 @@ type HybridPlug struct {
 	// todo: add tap related data need for tap creation
 }
 
+// LocalPlugger is the interface which construct local ovs hybrid plug
+type LocalPlugger interface {
+	Plug() error
+	GetLocalBridge() string
+}
+
 // Bridge is the interface of device with ports attached
 type Bridge interface {
+	NamedDevice
 	AddPort(port string) error
 }
 
@@ -36,9 +43,12 @@ type NamedDevice interface {
 }
 
 // NewHybridPlug creates an ovs hybrid plug for the neutron port
-func NewHybridPlug(portID, mac, vm string) (*HybridPlug, error) {
+func NewHybridPlug(portID, mac, vm string) (LocalPlugger, error) {
 	// Openstack convention to pick the first 9 chars of port id
-	portPrefix := portID[:9]
+	portPrefix := portID
+	if len(portID) > 9 {
+		portPrefix = portID[:9]
+	}
 
 	lbr, err := NewLinuxBridge("qbr" + portPrefix)
 	if err != nil {
@@ -77,4 +87,9 @@ func (h HybridPlug) Plug() error {
 	}
 
 	return nil
+}
+
+// GetLocalBridge gets the local Linuxbridge name
+func (h HybridPlug) GetLocalBridge() string {
+	return h.LinuxBridge.GetName()
 }

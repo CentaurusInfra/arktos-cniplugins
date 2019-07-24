@@ -16,6 +16,11 @@ func (o *mockBridge) AddPort(port string) error {
 	return args.Error(0)
 }
 
+func (o *mockBridge) GetName() string {
+	args := o.Called()
+	return args.String(0)
+}
+
 type mockOVSInterface struct {
 	mock.Mock
 }
