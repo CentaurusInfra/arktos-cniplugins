@@ -54,7 +54,7 @@ type Plugger struct {
 }
 
 // NewPlugger creates the Plugger applicable to Neutron ML2 ovs_hybrid_plug env
-func NewPlugger(neutronClient *neutron.Client, mac, devID, nspath string) *Plugger {
+func NewPlugger(neutronClient *neutron.Client, nspath string) *Plugger {
 	return &Plugger{
 		PortGetBinder:   neutronClient,
 		SubnetGetter:    neutronClient,
@@ -64,7 +64,7 @@ func NewPlugger(neutronClient *neutron.Client, mac, devID, nspath string) *Plugg
 }
 
 // Plug plugs vnic and makes the endpoint present in the target netns
-func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int, hostBr string) (*EPnic, error) {
+func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (*EPnic, error) {
 	// todo: add proper cleanup code in case of error
 
 	portID := vnic.PortID
@@ -98,7 +98,7 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int, h
 	}
 
 	// make the endpoint nic inside netns, and add it to qbr
-	if err = p.DevNetnsPlugger.Attach(vnic.Name, mac, ipnet, gw, routePrio, hostBr); err != nil {
+	if err = p.DevNetnsPlugger.Attach(vnic.Name, mac, ipnet, gw, routePrio, ovshybridplug.GetLocalBridge()); err != nil {
 		return nil, err
 	}
 

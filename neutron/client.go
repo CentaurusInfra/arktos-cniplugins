@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/portsbinding"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
@@ -17,12 +18,34 @@ type PortBindingDetail struct {
 
 // Client encapsulates neutron interaction around port related 2.0 API
 type Client struct {
-	// todo: add real auth (keystone v2/v3)
-	// username string
-	// password string
-	// tenant   string
-
 	ServiceClient *gophercloud.ServiceClient
+}
+
+// New creates a Neutron Client
+func New(user, password, tenant, identityURL string) (*Client, error) {
+	var authOpts = gophercloud.AuthOptions{
+		IdentityEndpoint: identityURL,
+		Username:         user,
+		Password:         password,
+		TenantName:       tenant, //openstack project, a.k.a. VPC
+		// todo: make DomainName configurable either in cni netconf file (per node) or from pod (per pod/user)
+		DomainName: "default",
+	}
+
+	provider, err := openstack.AuthenticatedClient(authOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get provider: %v", err)
+	}
+
+	networkClient, err := openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{
+		Name:   "alktron",
+		Region: "RegionOne", // todo: make it configurable in cni netconf file
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get network service client: %v", err)
+	}
+
+	return &Client{ServiceClient: networkClient}, nil
 }
 
 // GetPort gets detail of the neutron port by ID (not name)
