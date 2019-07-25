@@ -26,7 +26,7 @@ func TestAttachVNICs(t *testing.T) {
 
 	// nic 0 test setting
 	nicName0 := "eth0"
-	mac0 := "ba:be:fa:ce:00"
+	mac0 := "ba:be:fa:ce:11:00"
 	gw0 := net.ParseIP("10.0.0.1")
 	ipnet0 := &net.IPNet{IP: net.ParseIP("10.0.36.8"), Mask: net.CIDRMask(16, 32)}
 

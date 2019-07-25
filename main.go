@@ -48,6 +48,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 	}
 
 	plugger := vnicplug.NewPlugger(neutronClient, args.Netns)
+	// todo: consider a better devID (like pod id?) than args.ContainerID
 	r, err := attachVNICs(plugger, vnics.NICs, args.ContainerID, hostBound)
 	if err != nil {
 		return fmt.Errorf("ADD op failed to attach vnics: %v", err)
