@@ -140,10 +140,12 @@ func (p Plugger) getIPNetAndGw(ip, subnetID string) (*net.IPNet, *net.IP, error)
 		return nil, nil, fmt.Errorf("failed to get subnet: %v", err)
 	}
 	cidr := subnet.CIDR
-	ipGw, ipv4Net, err := net.ParseCIDR(cidr)
+	_, ipv4Net, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return nil, nil, fmt.Errorf("invalid CIDR %q: %v", cidr, err)
 	}
+
+	ipGw := net.ParseIP(subnet.GatewayIP)
 
 	return &net.IPNet{
 		IP:   net.ParseIP(ip),

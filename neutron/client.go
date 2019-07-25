@@ -38,7 +38,7 @@ func New(user, password, tenant, identityURL string) (*Client, error) {
 	}
 
 	networkClient, err := openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{
-		Name:   "alktron",
+		Name:   "neutron",
 		Region: "RegionOne", // todo: make it configurable in cni netconf file
 	})
 	if err != nil {
