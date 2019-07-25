@@ -71,6 +71,6 @@ func TestAddWithEmptyVPC(t *testing.T) {
 	out := stdout.String()
 	t.Logf("stdout: %s", out)
 	if !strings.Contains(out, "empty VPC") {
-		t.Errorf("sttout expecting 'empty VPC', got %q", out)
+		t.Errorf("stdout expecting 'empty VPC', got %q", out)
 	}
 }

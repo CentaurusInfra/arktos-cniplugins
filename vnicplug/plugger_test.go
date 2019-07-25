@@ -103,6 +103,7 @@ func TestPlug(t *testing.T) {
 
 	mockLocalPlugger := &mockLocalPlugger{}
 	mockLocalPlugger.On("Plug").Return(nil)
+	mockLocalPlugger.On("GetLocalBridge").Return(qbr)
 
 	hybridPlugGen := func(portID, mac, vm string) (ovsplug.LocalPlugger, error) {
 		return mockLocalPlugger, nil
@@ -130,7 +131,7 @@ func TestPlug(t *testing.T) {
 		IPv4Net: ipnet,
 	}
 
-	epNIC, err := plugger.Plug(&vnic, devID, boundHost, routePrio, qbr)
+	epNIC, err := plugger.Plug(&vnic, devID, boundHost, routePrio)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
