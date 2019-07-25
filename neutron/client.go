@@ -22,14 +22,13 @@ type Client struct {
 }
 
 // New creates a Neutron Client
-func New(user, password, tenant, identityURL string) (*Client, error) {
+func New(user, password, domain, vpc, identityURL string) (*Client, error) {
 	var authOpts = gophercloud.AuthOptions{
 		IdentityEndpoint: identityURL,
 		Username:         user,
 		Password:         password,
-		TenantName:       tenant, //openstack project, a.k.a. VPC
-		// todo: make DomainName configurable either in cni netconf file (per node) or from pod (per pod/user)
-		DomainName: "default",
+		TenantName:       vpc, //openstack project, a.k.a. VPC
+		DomainName:       domain,
 	}
 
 	provider, err := openstack.AuthenticatedClient(authOpts)
