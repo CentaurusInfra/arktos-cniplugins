@@ -13,7 +13,7 @@ type Tap struct {
 	Name string
 }
 
-// NewTap creates a tap device with specific name and mac address on the local host
+// NewTap creates a tap device with specific name and mac address on the local host, ensures in up state
 func NewTap(name string, mac *net.HardwareAddr) (*Tap, error) {
 	// todo: cleanup - remove faulty tap dev
 	la := netlink.LinkAttrs{Name: name}

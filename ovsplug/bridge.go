@@ -13,7 +13,7 @@ type LinuxBridge struct {
 	linkDev *netlink.Link
 }
 
-// NewLinuxBridge creates a new (or retrieve an existent) local Linux bridge device
+// NewLinuxBridge creates a new (or retrieve an existent) local Linux bridge device, and ensures it is in up state
 func NewLinuxBridge(name string) (*LinuxBridge, error) {
 	dev, err := netlink.LinkByName(name)
 	if err != nil {
@@ -26,7 +26,7 @@ func NewLinuxBridge(name string) (*LinuxBridge, error) {
 	}
 
 	// named link exists; we'll take it if type is bridge, and ensure it is up
-	return getBridgeInUp(name, dev)
+	return createBridgeFromDev(name, dev)
 }
 
 func createBridge(name string) (*LinuxBridge, error) {
@@ -43,7 +43,7 @@ func createBridge(name string) (*LinuxBridge, error) {
 		return nil, fmt.Errorf("post-create failure on retrieving bridge %q: %v", name, err)
 	}
 
-	br, err := createBridgeByLink(name, newBr, &dev)
+	br, err := createBridgeByLinkAndSetUp(name, newBr, &dev)
 	if err != nil {
 		return nil, fmt.Errorf("post-create failure: %v", err)
 	}
@@ -51,12 +51,12 @@ func createBridge(name string) (*LinuxBridge, error) {
 	return br, nil
 }
 
-func getBridgeInUp(name string, link netlink.Link) (*LinuxBridge, error) {
+func createBridgeFromDev(name string, link netlink.Link) (*LinuxBridge, error) {
 	if link.Type() != "bridge" {
 		return nil, fmt.Errorf("name conflicting: %q had been used by link type %s", name, link.Type())
 	}
 
-	br, err := createBridgeByLink(name, &netlink.Bridge{LinkAttrs: *link.Attrs()}, &link)
+	br, err := createBridgeByLinkAndSetUp(name, &netlink.Bridge{LinkAttrs: *link.Attrs()}, &link)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bridge %q: %v", name, err)
 	}
@@ -64,7 +64,7 @@ func getBridgeInUp(name string, link netlink.Link) (*LinuxBridge, error) {
 	return br, nil
 }
 
-func createBridgeByLink(name string, brMeta *netlink.Bridge, link *netlink.Link) (*LinuxBridge, error) {
+func createBridgeByLinkAndSetUp(name string, brMeta *netlink.Bridge, link *netlink.Link) (*LinuxBridge, error) {
 	br := &LinuxBridge{
 		Name:    name,
 		bridge:  brMeta,
