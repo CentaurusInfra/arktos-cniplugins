@@ -13,8 +13,9 @@ type Tap struct {
 	Name string
 }
 
-// NewTap creates a tap device with specific name and mac address on the local host
+// NewTap creates a tap device with specific name and mac address on the local host, ensures in up state
 func NewTap(name string, mac *net.HardwareAddr) (*Tap, error) {
+	// todo: cleanup - remove faulty tap dev
 	la := netlink.LinkAttrs{Name: name}
 	if mac != nil {
 		la.HardwareAddr = *mac
@@ -45,14 +46,19 @@ func NewTap(name string, mac *net.HardwareAddr) (*Tap, error) {
 
 	dev, err = netlink.LinkByName(name)
 	if err != nil {
-		// todo: cleanup - remove faulty tap dev
 		return nil, fmt.Errorf("post-create failure on getting tap %q link: %v", name, err)
 	}
 
-	return &Tap{
+	tap := &Tap{
 		Name:       name,
 		BridgePort: BridgePort{NetlinkDev: &dev},
-	}, nil
+	}
+
+	if err := tap.SetUp(); err != nil {
+		return nil, fmt.Errorf("post-create failure on setting tap %q link up: %v", name, err)
+	}
+
+	return tap, nil
 }
 
 // todo: add Remove method

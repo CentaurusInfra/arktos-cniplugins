@@ -13,7 +13,7 @@ type LinuxBridge struct {
 	linkDev *netlink.Link
 }
 
-// NewLinuxBridge creates a new (or retrieve an existent) local Linux bridge device
+// NewLinuxBridge creates a new (or retrieve an existent) local Linux bridge device, and ensures it is in up state
 func NewLinuxBridge(name string) (*LinuxBridge, error) {
 	dev, err := netlink.LinkByName(name)
 	if err != nil {
@@ -25,19 +25,12 @@ func NewLinuxBridge(name string) (*LinuxBridge, error) {
 		return createBridge(name)
 	}
 
-	// named link exists; we'll take it if type is bridge
-	if dev.Type() != "bridge" {
-		return nil, fmt.Errorf("name conflicting: %q had been used by link type %s", name, dev.Type())
-	}
-
-	return &LinuxBridge{
-		Name:    name,
-		bridge:  &netlink.Bridge{LinkAttrs: *dev.Attrs()},
-		linkDev: &dev,
-	}, nil
+	// named link exists; we'll take it if type is bridge, and ensure it is up
+	return createBridgeFromDev(name, dev)
 }
 
 func createBridge(name string) (*LinuxBridge, error) {
+	// todo: cleanup in case of error
 	la := netlink.NewLinkAttrs()
 	la.Name = name
 	newBr := &netlink.Bridge{LinkAttrs: la}
@@ -47,14 +40,43 @@ func createBridge(name string) (*LinuxBridge, error) {
 
 	dev, err := netlink.LinkByName(name)
 	if err != nil {
-		return nil, fmt.Errorf("post-create failure on creating bridge %q: %v", name, err)
+		return nil, fmt.Errorf("post-create failure on retrieving bridge %q: %v", name, err)
 	}
 
-	return &LinuxBridge{
+	br, err := createBridgeByLinkAndSetUp(name, newBr, &dev)
+	if err != nil {
+		return nil, fmt.Errorf("post-create failure: %v", err)
+	}
+
+	return br, nil
+}
+
+func createBridgeFromDev(name string, link netlink.Link) (*LinuxBridge, error) {
+	if link.Type() != "bridge" {
+		return nil, fmt.Errorf("name conflicting: %q had been used by link type %s", name, link.Type())
+	}
+
+	br, err := createBridgeByLinkAndSetUp(name, &netlink.Bridge{LinkAttrs: *link.Attrs()}, &link)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bridge %q: %v", name, err)
+	}
+
+	return br, nil
+}
+
+func createBridgeByLinkAndSetUp(name string, brMeta *netlink.Bridge, link *netlink.Link) (*LinuxBridge, error) {
+	br := &LinuxBridge{
 		Name:    name,
-		bridge:  newBr,
-		linkDev: &dev,
-	}, nil
+		bridge:  brMeta,
+		linkDev: link,
+	}
+
+	if err := br.SetUp(); err != nil {
+		return nil, fmt.Errorf("failed to set bridge %q up: %v", name, err)
+	}
+
+	return br, nil
+
 }
 
 // SetUp enables the link device

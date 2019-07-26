@@ -18,8 +18,9 @@ type Veth struct {
 	PeerEP *VethEP
 }
 
-// NewVeth creates a new veth pair having specific endpoint names
+// NewVeth creates a new veth pair having specific endpoint names, ensures its pairs in up state
 func NewVeth(name, peerName string) (*Veth, error) {
+	// todo: cleanup faulty veth pair in case of error
 	veth := &netlink.Veth{
 		LinkAttrs: netlink.LinkAttrs{Name: name},
 		PeerName:  peerName,
@@ -40,7 +41,25 @@ func NewVeth(name, peerName string) (*Veth, error) {
 		return nil, fmt.Errorf("post-create failure on creating veth pair (%q, %q): unable to retrieve endpoints", name, peerName)
 	}
 
-	return &Veth{EP: ep, PeerEP: peer}, nil
+	v := &Veth{EP: ep, PeerEP: peer}
+	if err := v.SetUp(); err != nil {
+		return nil, fmt.Errorf("post-create failure on creating veth pair (%q, %q): %v", name, peerName, err)
+	}
+
+	return v, nil
+}
+
+// SetUp ensures endpoints of veth pair in up status
+func (v *Veth) SetUp() error {
+	if err := v.EP.SetUp(); err != nil {
+		return fmt.Errorf("failed to set veth ep %q up: %v", v.EP.Name, err)
+	}
+
+	if err := v.PeerEP.SetUp(); err != nil {
+		return fmt.Errorf("failed to set veth ep %q up: %v", v.PeerEP.Name, err)
+	}
+
+	return nil
 }
 
 // todo: add Remove method
