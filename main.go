@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/containernetworking/cni/pkg/types"
 
-	"github.com/futurewei-cloud/alktron/neutron"
 	"github.com/futurewei-cloud/alktron/vnicplug"
 
 	"github.com/containernetworking/plugins/pkg/ns"
@@ -36,15 +34,20 @@ func cmdAdd(args *skel.CmdArgs) error {
 	}
 	defer netns.Close()
 
-	neutronClient, err := getNeutronClient(vnics.VPC)
+	nc, err := loadNeutronConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load neutron config: %v", err)
+	}
+
+	neutronClient, err := nc.getNeutronClient(vnics.VPC)
 	if err != nil {
 		return fmt.Errorf("failed to get neutron client: %v", err)
 	}
 
-	hostBound, err := getEnvVarValue("ALKTRON_HOST")
-	if err != nil {
+	hostBound := nc.Host
+	if hostBound == "" {
 		// todo: use localhost as default
-		return err
+		return fmt.Errorf("invalid config: Host not specified")
 	}
 
 	plugger := vnicplug.NewPlugger(neutronClient, args.Netns)
@@ -77,32 +80,4 @@ func getCNIVerInNetConf(bytes []byte) (string, error) {
 		return "", fmt.Errorf("failed to load netconf: %v", err)
 	}
 	return n.CNIVersion, nil
-}
-
-func getNeutronClient(vpc string) (*neutron.Client, error) {
-	user, err := getEnvVarValue("ALKTRON_USER")
-	if err != nil {
-		return nil, err
-	}
-
-	password, err := getEnvVarValue("ALKTRON_PASSWORD")
-	if err != nil {
-		return nil, err
-	}
-
-	identityURL, err := getEnvVarValue("ALKTRON_IDENTITYURL")
-	if err != nil {
-		return nil, err
-	}
-
-	return neutron.New(user, password, vpc, identityURL)
-}
-
-func getEnvVarValue(name string) (string, error) {
-	val := os.Getenv(name)
-	if val == "" {
-		return "", fmt.Errorf("invalid env var %q: empty not allowed", name)
-	}
-
-	return val, nil
 }
