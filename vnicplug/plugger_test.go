@@ -91,7 +91,8 @@ func TestPlug(t *testing.T) {
 	}
 
 	subnetDetail := &subnets.Subnet{
-		CIDR: "10.0.0.1/24",
+		CIDR:      "10.0.0.0/24",
+		GatewayIP: "10.0.0.1",
 	}
 
 	mockPortGetBinder := &mockPortGetBinder{}

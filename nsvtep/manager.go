@@ -45,11 +45,12 @@ func (p Manager) Attach(dev string, mac net.HardwareAddr, ipnet *net.IPNet, gw *
 func createBridgedVTEPInNs(lxbr *ovsplug.LinuxBridge, netns ns.NetNS) (string, error) {
 	// creates veth pair, one end connecting to host bridge, the other across netns
 	ep := "qvn" + lxbr.Name[3:]
-	epPeer := "qvh" + lxbr.Name[3:]
-	if _, err := ovsplug.NewVeth(ep, epPeer); err != nil {
-		return "", fmt.Errorf("failed to create veth pair (%q, %q): %v", ep, epPeer, err)
+	// neutron agent is expecting endpoint named as "tap<port-id-prefix>" attached to local bridge
+	epOnBr := "tap" + lxbr.Name[3:]
+	if _, err := ovsplug.NewVeth(ep, epOnBr); err != nil {
+		return "", fmt.Errorf("failed to create veth pair (%q, %q): %v", ep, epOnBr, err)
 	}
-	lxbr.AddPort(epPeer)
+	lxbr.AddPort(epOnBr)
 
 	if err := setDevNetns(ep, netns); err != nil {
 		// todo: clean up veth pair just created

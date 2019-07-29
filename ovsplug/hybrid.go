@@ -44,10 +44,10 @@ type NamedDevice interface {
 
 // NewHybridPlug creates an ovs hybrid plug for the neutron port
 func NewHybridPlug(portID, mac, vm string) (LocalPlugger, error) {
-	// Openstack convention to pick the first 9 chars of port id
+	// Openstack convention to pick the first 11 chars of port id
 	portPrefix := portID
-	if len(portID) > 9 {
-		portPrefix = portID[:9]
+	if len(portID) > 11 {
+		portPrefix = portID[:11]
 	}
 
 	lbr, err := NewLinuxBridge("qbr" + portPrefix)
