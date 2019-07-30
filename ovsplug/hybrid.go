@@ -11,10 +11,9 @@ type HybridPlug struct {
 	MACAddr       string
 	VMID          string
 
-	OVSBridge    Bridge
-	OVSInterface ExtResourceSetter
-	LinuxBridge  Bridge
-	Qvo, Qvb     NamedDevice
+	OVSBridge   ExtResBridge
+	LinuxBridge Bridge
+	Qvo, Qvb    NamedDevice
 
 	// tap not created here as it should be in the desired CNI netns
 	// todo: add tap related data need for tap creation
@@ -32,9 +31,11 @@ type Bridge interface {
 	AddPort(port string) error
 }
 
-// ExtResourceSetter is the interface to set external resource
-type ExtResourceSetter interface {
-	SetExternalResource(name, status, mac, vm string) ([]byte, error)
+// ExtResBridge is the interface of device with ports along with external resource seeting
+// Adding port and setting properties is required in one transaction
+type ExtResBridge interface {
+	NamedDevice
+	AddPortAndSetExtResources(name, portID, status, mac, vm string) ([]byte, error)
 }
 
 // NamedDevice is the interface that has a name
@@ -66,7 +67,6 @@ func NewHybridPlug(portID, mac, vm string) (LocalPlugger, error) {
 		MACAddr:       mac,
 		VMID:          vm,
 		OVSBridge:     NewOVSBridge(ovsbridge),
-		OVSInterface:  NewOVSInterface("qvo" + portPrefix),
 		LinuxBridge:   lbr,
 		Qvb:           veth.EP,
 		Qvo:           veth.PeerEP,
@@ -75,11 +75,9 @@ func NewHybridPlug(portID, mac, vm string) (LocalPlugger, error) {
 
 // Plug creates needed devices and connects them properly
 func (h HybridPlug) Plug() error {
-	h.OVSBridge.AddPort(h.Qvo.GetName())
-
-	_, err := h.OVSInterface.SetExternalResource(h.NeutronPortID, "active", h.MACAddr, h.VMID)
+	out, err := h.OVSBridge.AddPortAndSetExtResources(h.Qvo.GetName(), h.NeutronPortID, "active", h.MACAddr, h.VMID)
 	if err != nil {
-		return fmt.Errorf("plug failed on setting external-ids: %v", err)
+		return fmt.Errorf("plug failed on setting external-ids, %s: %v", string(out), err)
 	}
 
 	if err = h.LinuxBridge.AddPort(h.Qvb.GetName()); err != nil {

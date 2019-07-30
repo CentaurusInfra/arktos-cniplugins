@@ -1,7 +1,8 @@
 package ovsplug
 
 import (
-	"github.com/digitalocean/go-openvswitch/ovs"
+	"fmt"
+	"os/exec"
 )
 
 // OVSBridge represents a local ovs bridge
@@ -14,10 +15,25 @@ func NewOVSBridge(name string) *OVSBridge {
 	return &OVSBridge{Name: name}
 }
 
-// AddPort adds a port with specified name to the ovs bridge
-func (b OVSBridge) AddPort(port string) error {
-	c := ovs.New()
-	return c.VSwitch.AddPort(b.Name, port)
+// AddPortAndSetExtResources adds the port of specified name to the ovs bridge,
+// and sets various external reources, in atomic fashion (otherwise neutron agent
+// may get partial update and unable to populate flow table properly)
+func (b OVSBridge) AddPortAndSetExtResources(name, portID, status, mac, vm string) ([]byte, error) {
+	if portID == "" && status == "" && mac == "" && vm == "" {
+		return nil, fmt.Errorf("invalid inputs, all empty")
+	}
+
+	resource := &ExternalResource{
+		IFID:        portID,
+		Status:      status,
+		AttachedMAC: mac,
+		VMUUID:      vm,
+	}
+
+	// todo: add ovs timeout setting to avoid hard code
+	args := []string{"--timeout=120", "--", "--may-exist", "add-port", b.Name, name, "--", "set", "Interface", name}
+	args = append(args, resource.toExternalIds()...)
+	return exec.Command("ovs-vsctl", args...).CombinedOutput()
 }
 
 // GetName gets the ovs bridge name
