@@ -15,7 +15,7 @@ import (
 func TestOVSAddPortAndSetExtResources(t *testing.T) {
 	ovsBr := os.Getenv("TEST_OVS_BR")
 	port := os.Getenv("TEST_OVS_PORT")
-	if port == "" {
+	if ovsBr == "" || port == "" {
 		t.Skipf("Skipping due to lack of TEST_OVS_BR & TEST_OVS_PORT env var")
 	}
 	br := ovsplug.NewOVSBridge(ovsBr)
