@@ -21,12 +21,17 @@ func (o *mockBridge) GetName() string {
 	return args.String(0)
 }
 
-type mockOVSInterface struct {
+type mockExtResBridge struct {
 	mock.Mock
 }
 
-func (m *mockOVSInterface) SetExternalResource(name, status, mac, vm string) ([]byte, error) {
-	args := m.Called(name, status, mac, vm)
+func (m *mockExtResBridge) GetName() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+func (m *mockExtResBridge) AddPortAndSetExtResources(name, portID, status, mac, vm string) ([]byte, error) {
+	args := m.Called(name, portID, status, mac, vm)
 	return args.Get(0).([]byte), args.Error(1)
 }
 
@@ -40,11 +45,13 @@ func (v *mockVEP) GetName() string {
 }
 
 func TestHybridPlug(t *testing.T) {
-	mockOVSBr := &mockBridge{}
-	mockOVSBr.On("AddPort", "qvo123456789").Return(nil)
+	portName := "qvo123456789"
+	portID := "1234567890abcdef"
+	mac := "aa:bb:cc:dd:ee:ff"
+	vm := "libvirt-vm-id"
 
-	mockOVSIf := &mockOVSInterface{}
-	mockOVSIf.On("SetExternalResource", "1234567890abcdef", "active", "aa:bb:cc:dd:ee:ff", "libvirt-vm-id").Return([]byte{}, nil)
+	mockOVSBr := &mockExtResBridge{}
+	mockOVSBr.On("AddPortAndSetExtResources", portName, portID, "active", mac, vm).Return([]byte{}, nil)
 
 	mockLxBr := &mockBridge{}
 	mockLxBr.On("AddPort", "qvb123456789").Return(nil)
@@ -55,15 +62,14 @@ func TestHybridPlug(t *testing.T) {
 	mockqvo.On("GetName").Return("qvo123456789")
 
 	h := ovsplug.HybridPlug{
-		NeutronPortID: "1234567890abcdef",
-		MACAddr:       "aa:bb:cc:dd:ee:ff",
-		VMID:          "libvirt-vm-id",
+		NeutronPortID: portID,
+		MACAddr:       mac,
+		VMID:          vm,
 
-		OVSBridge:    mockOVSBr,
-		OVSInterface: mockOVSIf,
-		LinuxBridge:  mockLxBr,
-		Qvb:          mockqvb,
-		Qvo:          mockqvo,
+		OVSBridge:   mockOVSBr,
+		LinuxBridge: mockLxBr,
+		Qvb:         mockqvb,
+		Qvo:         mockqvo,
 	}
 
 	if err := h.Plug(); err != nil {
@@ -73,6 +79,5 @@ func TestHybridPlug(t *testing.T) {
 	mockqvo.AssertExpectations(t)
 	mockqvb.AssertExpectations(t)
 	mockLxBr.AssertExpectations(t)
-	mockOVSIf.AssertExpectations(t)
 	mockOVSBr.AssertExpectations(t)
 }
