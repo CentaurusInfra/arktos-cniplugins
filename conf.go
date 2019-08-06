@@ -10,10 +10,12 @@ import (
 
 // NeutronConfig keeps the config settings for neutron access
 type NeutronConfig struct {
-	User        string `json:"user" env:"ALKTRON_USER"`
-	Password    string `json:"password" env:"ALKTRON_PASSWORD"`
-	IdentityURL string `json:"identity_url" env:"ALKTRON_IDENTITYURL"`
-	Host        string `json:"host" env:"ALKTRON_HOST"`
+	User                        string `json:"user" env:"ALKTRON_USER"`
+	Password                    string `json:"password" env:"ALKTRON_PASSWORD"`
+	IdentityURL                 string `json:"identity_url" env:"ALKTRON_IDENTITYURL"`
+	Host                        string `json:"host" env:"ALKTRON_HOST"`
+	ProbeIntervalInMilliseconds uint32 `json:"interval_in_ms" env:"ALKTRON_PROBEINTERVALINMS"`
+	ProbeTimeoutInSeconds       uint32 `json:"timeout_in_sec" env:"ALKTRON_PROBETIMEOUTINSEC"`
 }
 
 const defaultNeutronConfPath = "/etc/alktron/neutron.json"

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/containernetworking/cni/pkg/types"
 
@@ -51,6 +52,15 @@ func cmdAdd(args *skel.CmdArgs) error {
 	}
 
 	plugger := vnicplug.NewPlugger(neutronClient, args.Netns)
+
+	if nc.ProbeIntervalInMilliseconds != 0 {
+		plugger.SetProbeInterval(time.Millisecond * time.Duration(nc.ProbeIntervalInMilliseconds))
+	}
+
+	if nc.ProbeTimeoutInSeconds != 0 {
+		plugger.SetProbeTimeout(time.Second * time.Duration(nc.ProbeTimeoutInSeconds))
+	}
+
 	// todo: consider a better devID (like pod id?) than args.ContainerID
 	r, err := attachVNICs(plugger, vnics.NICs, args.ContainerID, hostBound)
 	if err != nil {
