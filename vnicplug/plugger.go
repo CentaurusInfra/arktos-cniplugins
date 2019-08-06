@@ -12,6 +12,12 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 
 	"github.com/futurewei-cloud/alktron/vnic"
+	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+const (
+	defaultProbeInterval = time.Millisecond * 500
+	defaultProbeTimeout  = time.Second * 15
 )
 
 // EPnic represents the physical endpoint NIC pluuged in netns
@@ -51,6 +57,9 @@ type Plugger struct {
 	SubnetGetter    SubnetGetter
 	HybridPlugGen   func(portID, mac, vm string) (ovsplug.LocalPlugger, error)
 	DevNetnsPlugger DevNetnsManager
+
+	probeInterval time.Duration
+	probeTimeout  time.Duration
 }
 
 // NewPlugger creates the Plugger applicable to Neutron ML2 ovs_hybrid_plug env
@@ -60,7 +69,19 @@ func NewPlugger(neutronClient *neutron.Client, nspath string) *Plugger {
 		SubnetGetter:    neutronClient,
 		HybridPlugGen:   ovsplug.NewHybridPlug,
 		DevNetnsPlugger: nsvtep.NewManager(nspath),
+		probeInterval:   defaultProbeInterval,
+		probeTimeout:    defaultProbeTimeout,
 	}
+}
+
+// SetProbeInterval sets the port status probe configuration of interval time
+func (p Plugger) SetProbeInterval(interval time.Duration) {
+	p.probeInterval = interval
+}
+
+// SetProbeTimeout sets the port status probe configuration of timeout value
+func (p Plugger) SetProbeTimeout(timeout time.Duration) {
+	p.probeTimeout = timeout
 }
 
 // Plug plugs vnic and makes the endpoint present in the target netns
@@ -115,23 +136,14 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (
 }
 
 func (p Plugger) ensureStatusActive(portID string) error {
-	// todo: add time out to avoid live lock
-	portDetail, err := p.PortGetBinder.GetPort(portID)
-	for {
+	return wait.PollImmediate(p.probeInterval, p.probeTimeout, func() (bool, error) {
+		portDetail, err := p.PortGetBinder.GetPort(portID)
 		if err != nil {
-			return fmt.Errorf("failed to plug vnic on verifying port status: %v", err)
+			return false, fmt.Errorf("failed to plug vnic on verifying port status: %v", err)
 		}
 
-		if strings.EqualFold("active", portDetail.Status) {
-			break
-		}
-
-		// todo: add period time config to avoid hardcoded value
-		<-time.After(1 * time.Second)
-		portDetail, err = p.PortGetBinder.GetPort(portID)
-	}
-
-	return nil
+		return strings.EqualFold("active", portDetail.Status), nil
+	})
 }
 
 func (p Plugger) getIPNetAndGw(ip, subnetID string) (*net.IPNet, *net.IP, error) {

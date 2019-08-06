@@ -10,4 +10,5 @@ require (
 	github.com/tkanos/gonfig v0.0.0-20181112185242-896f3d81fadf
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f // indirect
+	k8s.io/apimachinery v0.0.0-20190802060556-6fa4771c83b3
 )
