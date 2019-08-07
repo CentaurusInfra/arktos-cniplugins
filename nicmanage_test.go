@@ -20,6 +20,11 @@ func (m *mockPlugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio i
 	return args.Get(0).(*vnicplug.EPnic), args.Error(1)
 }
 
+func (m *mockPlugger) Unplug(vnic *vnic.VNIC, devID, boundHost string) error {
+	args := m.Called(vnic, devID, boundHost)
+	return args.Error(0)
+}
+
 func TestAttachVNICs(t *testing.T) {
 	devID := "mysandbox"
 	host := "a01.b.c"
@@ -77,6 +82,21 @@ func TestAttachVNICs(t *testing.T) {
 
 	if !reflect.DeepEqual(ipconfigExpected, r.IPs[0]) {
 		t.Errorf("IPs[0]: expecting %v; got %v", ipconfigExpected, r.IPs[0])
+	}
+
+	mockPlugger.AssertExpectations(t)
+}
+
+func TestDetachVNICs(t *testing.T) {
+	vn := vnic.VNIC{}
+	devID := "alktron:1234"
+	host := "my-host"
+
+	mockPlugger := &mockPlugger{}
+	mockPlugger.On("Unplug", &vn, devID, host).Return(nil)
+
+	if err := detachVNICs(mockPlugger, []vnic.VNIC{vn}, devID, host); err != nil {
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	mockPlugger.AssertExpectations(t)

@@ -11,9 +11,10 @@ import (
 // route metric starts from 100, decreasing subsequentially
 const initialRoutePrio = 100
 
-// Plugger is the plugger oversees the whole process of attaching vnic(neutron port)
+// Plugger is the plugger oversees the whole process of attaching/detaching vnic(neutron port)
 type Plugger interface {
 	Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (*vnicplug.EPnic, error)
+	Unplug(vnic *vnic.VNIC, devID, boundHost string) error
 }
 
 func attachVNICs(plugger Plugger, vns []vnic.VNIC, devID, host string) (*current.Result, error) {
@@ -49,4 +50,14 @@ func attachVNICs(plugger Plugger, vns []vnic.VNIC, devID, host string) (*current
 	}
 
 	return r, nil
+}
+
+func detachVNICs(plugger Plugger, vns []vnic.VNIC, devID, host string) error {
+	for _, vn := range vns {
+		if err := plugger.Unplug(&vn, devID, host); err != nil {
+			return fmt.Errorf("failed to unplug vnic %v: %v", vn, err)
+		}
+	}
+
+	return nil
 }
