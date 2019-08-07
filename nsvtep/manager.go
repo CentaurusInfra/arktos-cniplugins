@@ -42,6 +42,17 @@ func (p Manager) Attach(dev string, mac net.HardwareAddr, ipnet *net.IPNet, gw *
 	})
 }
 
+// Detach deletes the veth pair of tap device (and the peer inside netns), removes from host bridge
+func (p Manager) Detach(dev, hostBr string) error {
+	epTap := "tap" + hostBr[3:]
+
+	if err := ovsplug.RemoveVEP(epTap); err != nil {
+		return fmt.Errorf("failed to detach vtep %q for vnic %q: %v", epTap, dev, err)
+	}
+
+	return nil
+}
+
 func createBridgedVTEPInNs(lxbr *ovsplug.LinuxBridge, netns ns.NetNS) (string, error) {
 	// creates veth pair, one end connecting to host bridge, the other across netns
 	ep := "qvn" + lxbr.Name[3:]
@@ -53,7 +64,7 @@ func createBridgedVTEPInNs(lxbr *ovsplug.LinuxBridge, netns ns.NetNS) (string, e
 	lxbr.AddPort(epOnBr)
 
 	if err := setDevNetns(ep, netns); err != nil {
-		// todo: clean up veth pair just created
+		ovsplug.RemoveVEP(epOnBr)
 		return "", err
 	}
 

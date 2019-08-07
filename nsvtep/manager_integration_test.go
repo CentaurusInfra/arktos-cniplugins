@@ -33,3 +33,16 @@ func TestNSvtepAttach(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
+
+func TestNSvtepDetach(t *testing.T) {
+	nspath := os.Getenv("TEST_NSVTEP_NETNS_PATH")
+	hostBr := os.Getenv("TEST_NSVTEP_HOST_BR")
+	if hostBr == "" || nspath == "" {
+		t.Skipf("Skipping due to lack of TEST_NSVTEP_HOST_BR & TEST_NSVTEP_NETNS_PATH")
+	}
+
+	nsvtepManager := nsvtep.Manager{NSPath: nspath}
+	if err := nsvtepManager.Detach("dummy", hostBr); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}

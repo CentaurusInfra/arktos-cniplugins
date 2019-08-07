@@ -6,12 +6,6 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-// VethEP respresents one endpoint of veth pair
-type VethEP struct {
-	BridgePort
-	Name string
-}
-
 // Veth represents a veth pair
 type Veth struct {
 	EP     *VethEP
@@ -63,22 +57,3 @@ func (v *Veth) SetUp() error {
 }
 
 // todo: add Remove method
-
-func getVethEP(name string) *VethEP {
-	dev, err := netlink.LinkByName(name)
-	if err != nil {
-		return nil
-	}
-
-	// todo: add more stringent check against link type etc
-
-	return &VethEP{
-		Name:       name,
-		BridgePort: BridgePort{NetlinkDev: &dev},
-	}
-}
-
-// GetName gets name
-func (ep VethEP) GetName() string {
-	return ep.Name
-}
