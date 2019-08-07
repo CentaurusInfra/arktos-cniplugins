@@ -72,7 +72,35 @@ func cmdAdd(args *skel.CmdArgs) error {
 }
 
 func cmdDel(args *skel.CmdArgs) error {
-	return errors.New("to be implemented")
+	vnics, err := vnic.LoadVNICs(args.Args)
+	if err != nil {
+		return fmt.Errorf("DEL op failed to load cni args: %v", err)
+	}
+
+	netns, err := ns.GetNS(args.Netns)
+	if err != nil {
+		return fmt.Errorf("failed to open netns %q: %v", args.Netns, err)
+	}
+	defer netns.Close()
+
+	nc, err := loadNeutronConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load neutron config: %v", err)
+	}
+
+	neutronClient, err := nc.getNeutronClient(vnics.VPC)
+	if err != nil {
+		return fmt.Errorf("failed to get neutron client: %v", err)
+	}
+
+	hostBound := nc.Host
+	if hostBound == "" {
+		// todo: use localhost as default
+		return fmt.Errorf("invalid config: Host not specified")
+	}
+
+	plugger := vnicplug.NewPlugger(neutronClient, args.Netns)
+	return detachVNICs(plugger, vnics.NICs, args.ContainerID, hostBound)
 }
 
 func cmdCheck(args *skel.CmdArgs) error {

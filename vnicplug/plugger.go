@@ -135,6 +135,11 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (
 	}, nil
 }
 
+// Unplug cleans up network resources allocated for the vnic
+func (p Plugger) Unplug(vnic *vnic.VNIC, devID, boundHost string) error {
+	return fmt.Errorf("to be implemeneted")
+}
+
 func (p Plugger) ensureStatusActive(portID string) error {
 	return wait.PollImmediate(p.probeInterval, p.probeTimeout, func() (bool, error) {
 		portDetail, err := p.PortGetBinder.GetPort(portID)
