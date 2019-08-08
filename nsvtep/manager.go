@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/futurewei-cloud/alktron/ovsplug"
 	"github.com/vishvananda/netlink"
@@ -64,7 +66,9 @@ func createBridgedVTEPInNs(lxbr *ovsplug.LinuxBridge, netns ns.NetNS) (string, e
 	lxbr.AddPort(epOnBr)
 
 	if err := setDevNetns(ep, netns); err != nil {
-		ovsplug.RemoveVEP(epOnBr)
+		if err := ovsplug.RemoveVEP(epOnBr); err != nil {
+			log.Warnf("cleanup failed, netns vtep %q: %v", epOnBr, err)
+		}
 		return "", err
 	}
 
