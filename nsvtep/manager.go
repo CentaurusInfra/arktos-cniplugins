@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"net"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/futurewei-cloud/alktron/ovsplug"
+	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 
