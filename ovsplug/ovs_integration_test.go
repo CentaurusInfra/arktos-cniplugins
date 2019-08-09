@@ -9,7 +9,7 @@ import (
 	"github.com/futurewei-cloud/alktron/ovsplug"
 )
 
-// sudo -E go test ./... -tags=integration -v -run TestOVSXXX to run specfic case
+// sudo -E go test ./... -tags=integration -v -run TestOVSXXX to run specific case
 // need to set TEST_OVS_XXX env vars, otherwise skipped
 
 func TestOVSAddPortAndSetExtResources(t *testing.T) {
