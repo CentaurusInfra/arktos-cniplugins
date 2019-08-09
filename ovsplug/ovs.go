@@ -3,6 +3,8 @@ package ovsplug
 import (
 	"fmt"
 	"os/exec"
+
+	"github.com/digitalocean/go-openvswitch/ovs"
 )
 
 // OVSBridge represents a local ovs bridge
@@ -41,4 +43,7 @@ func (b OVSBridge) GetName() string {
 	return b.Name
 }
 
-// todo: add DelPort method
+// DeletePort deletes port from ovs bridge (and also implicitly removes flow table entries)
+func (b OVSBridge) DeletePort(name string) error {
+	return ovs.New().VSwitch.DeletePort(b.Name, name)
+}

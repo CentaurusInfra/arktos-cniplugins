@@ -9,7 +9,7 @@ import (
 	"github.com/futurewei-cloud/alktron/ovsplug"
 )
 
-// sudo -E go test ./... -tags=integration -v -run OVSAddPortAndSetExtResources to run this suite
+// sudo -E go test ./... -tags=integration -v -run TestOVSXXX to run specfic case
 // need to set TEST_OVS_XXX env vars, otherwise skipped
 
 func TestOVSAddPortAndSetExtResources(t *testing.T) {
@@ -24,5 +24,18 @@ func TestOVSAddPortAndSetExtResources(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("unexpected error, out=%s: %v", string(out), err)
+	}
+}
+
+func TestOVSDeletePort(t *testing.T) {
+	ovsBr := os.Getenv("TEST_OVS_BR")
+	port := os.Getenv("TEST_OVS_PORT")
+	if ovsBr == "" || port == "" {
+		t.Skipf("Skipping due to lack of TEST_OVS_BR & TEST_OVS_PORT env var")
+	}
+	br := ovsplug.NewOVSBridge(ovsBr)
+
+	if err := br.DeletePort(port); err != nil {
+		t.Errorf("unexpected error: %v", err)
 	}
 }
