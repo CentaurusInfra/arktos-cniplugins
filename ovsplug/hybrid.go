@@ -1,6 +1,10 @@
 package ovsplug
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/uber-go/multierr"
+)
 
 const ovsbridge = "br-int"
 
@@ -14,9 +18,6 @@ type HybridPlug struct {
 	OVSBridge   ExtResBridge
 	LinuxBridge Bridge
 	Qvo, Qvb    NamedDevice
-
-	// tap not created here as it should be in the desired CNI netns
-	// todo: add tap related data need for tap creation
 }
 
 // LocalPlugger is the interface which construct local ovs hybrid plug
@@ -29,6 +30,8 @@ type LocalPlugger interface {
 type Bridge interface {
 	NamedDevice
 	AddPort(port string) error
+	DeletePort(port string) error
+	Delete() error
 }
 
 // ExtResBridge is the interface of device with ports along with external resource seeting
@@ -36,6 +39,7 @@ type Bridge interface {
 type ExtResBridge interface {
 	NamedDevice
 	AddPortAndSetExtResources(name, portID, status, mac, vm string) ([]byte, error)
+	DeletePort(name string) error
 }
 
 // NamedDevice is the interface that has a name
@@ -90,4 +94,12 @@ func (h HybridPlug) Plug() error {
 // GetLocalBridge gets the local Linuxbridge name
 func (h HybridPlug) GetLocalBridge() string {
 	return h.LinuxBridge.GetName()
+}
+
+// Unplug cleans up network devices allocated for this hybrid structure
+func (h HybridPlug) Unplug() error {
+	return multierr.Combine(
+		h.OVSBridge.DeletePort(h.Qvo.GetName()),
+		h.LinuxBridge.DeletePort(h.Qvb.GetName()),
+		h.LinuxBridge.Delete())
 }
