@@ -103,5 +103,26 @@ func (br *LinuxBridge) GetName() string {
 	return br.Name
 }
 
-// todo: add Remove method
-// todo: add SetDown method
+// Delete deletes the Linux bridge (with its underlying network device)
+func (br *LinuxBridge) Delete() error {
+	if err := netlink.LinkDel(*br.linkDev); err != nil {
+		return fmt.Errorf("failed to delete bridge %q: %v", br.Name, err)
+	}
+
+	return nil
+}
+
+// DeletePort deletes port from local Linux bridge by deleting the associated network device
+// If the port device is in veth pair, whole veth pair would be deleted too
+func (br *LinuxBridge) DeletePort(port string) error {
+	dev, err := netlink.LinkByName(port)
+	if err != nil {
+		return fmt.Errorf("could not locate dev %q; failed to delete it from bridge %q: %v", port, br.Name, err)
+	}
+
+	if err := netlink.LinkDel(dev); err != nil {
+		return fmt.Errorf("failed to delete port %q from bridge %q: %v", port, br.Name, err)
+	}
+
+	return nil
+}
