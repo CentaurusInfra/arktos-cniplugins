@@ -4,14 +4,19 @@ alktron, as a cni plugion, is expecting neutron port related information from th
 ```
 ...;VPC=demo;NICs=[{"portid":"93881c89-89ce-407e-a775-d8d3319431d5"}]
 ```
+See [alktron design spec](https://github.com/futurewei-cloud/alkaid/blob/master/docs/design-proposals/network/NICAndVPCSupportInAlkaid.md) for detail.
 
-It is CRI runtime's responsibility to pass proper cni args to alktron. We have patched version of containerd & virtlet for end-to-end proof of concept purpose; they are able to accept vpc/portid from kubelet by the above protocol and pass further to alktron as expected. 
 
-As the first link of such process chain, kubelet has to pass the needed data (namely neutron project & port id) to CRI runtime.
+It is CRI runtime's responsibility to pass proper cni args to alktron. CRI runtime can have its own way to interact with cni plugin. For instance, virlet adds multi-ip-preferences under pod.metadata.annotations (see [multi-cni pod yaml](https://github.com/Mirantis/virtlet/blob/master/examples/ubuntu-multi-cni.yaml)) to explicitly support multi cni types. For Alktron cni plugin, we expect CRI to pass on the needed data as called out in our design spec.
 
-There are various ways for kubelet to pass data to CRI downstream, including in new fields by extending or breaking CRI mechanism. One easy (and recommended) approach, in comliance of CRI spec, is packing the infomation into Annotations (with key of VPC and NIVs, respectively) of PodSandboxConfig
+For proof of concept end-to-end verification purpose, we have made patched version of containerd & virtlet that are able to accept vpc/portid from kubelet by the below-described simple protocol and pass further to alktron. 
 
-``` golang
+
+Anyway, as the first link of such process chain, kubelet has to pass the needed data (namely neutron vpc & port id) to CRI runtime.
+
+There are various ways for kubelet to pass data to CRI downstream, including putting in new fields by extending or even breaking CRI mechanism. One easy (and commonly recommended) approach, in compliance of CRI spec, is packing the infomation into Annotations (with key of VPC and NICs, respectively) of PodSandboxConfig
+
+```golang
 type PodSandboxConfig struct {
         // Pod name of the sandbox.
         Name string
@@ -31,9 +36,9 @@ type PodSandboxConfig struct {
 }
 ```
 
-The official kubelet would put pod.metadata.annotations to PodSandboxConfig.Annotations; if alktron needed data were put in pod annotations, it would be passed to CRI runtime. One pod example is as below
+The official kubelet puts pod.metadata.annotations to PodSandboxConfig.Annotations; if alktron needed data were put in pod annotations, it would be passed to CRI runtime. One such pod example is as below
 
-```
+```yaml
 $ cat pod-alktron-y.yaml
 apiVersion: v1
 kind: Pod
