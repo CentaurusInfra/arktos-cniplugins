@@ -5,7 +5,7 @@ alktron, as a cni plugion, is expecting neutron port related information from th
 ...;VPC=demo;NICs=[{"portid":"93881c89-89ce-407e-a775-d8d3319431d5"}]
 ```
 
-It is CRI runtime's responsibility to pass proper cni args to alktron. We have patched version of containerd & virtlet;  they are able to accept vpc/portid from kubelet by the above protocol and pass further to alktron as expected. 
+It is CRI runtime's responsibility to pass proper cni args to alktron. We have patched version of containerd & virtlet for end-to-end proof of concept purpose; they are able to accept vpc/portid from kubelet by the above protocol and pass further to alktron as expected. 
 
 As the first link of such process chain, kubelet has to pass the needed data (namely neutron project & port id) to CRI runtime.
 
