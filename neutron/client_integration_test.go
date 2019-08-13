@@ -119,3 +119,25 @@ func TestGetSubnet(t *testing.T) {
 		t.Errorf("subnetID expecting %s, got %s", subnetID, subnetDetail.ID)
 	}
 }
+
+func TestUnbindPort(t *testing.T) {
+	portID := os.Getenv("TEST_UNBINDPORT")
+	if portID == "" {
+		t.Skipf("skipping due to lack of TEST_UNBINDPORT env vars")
+	}
+
+	neutronClient, err := getNeutronClient(authOpts)
+	if err != nil {
+		t.Fatalf("failed to get neutron client: %v", err)
+	}
+
+	portDetail, err := neutronClient.UnbindPort(portID)
+	if err != nil {
+		t.Errorf("failed to unbind port %q: %v", portID, err)
+	}
+
+	t.Logf("port detail: %v", portDetail)
+	if "" != portDetail.PortsBindingExt.HostID {
+		t.Errorf("unexpected hostid %s", portDetail.PortsBindingExt.HostID)
+	}
+}
