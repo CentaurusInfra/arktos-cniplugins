@@ -107,7 +107,7 @@ func (c Client) GetSubnet(subnetID string) (*subnets.Subnet, error) {
 	return s, nil
 }
 
-// UnbindPort clears binding data and device owner property of the specified port in neuron service
+// UnbindPort clears binding data and device owner property of the specified port in neutron service
 func (c Client) UnbindPort(portID string) (*PortBindingDetail, error) {
 	if portID == "" {
 		return nil, fmt.Errorf("invalid portID: empty not allowed")
