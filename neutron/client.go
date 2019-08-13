@@ -107,4 +107,25 @@ func (c Client) GetSubnet(subnetID string) (*subnets.Subnet, error) {
 	return s, nil
 }
 
-// todo: add unbind func
+// UnbindPort clears binding data and device owner property of the specified port in neuron service
+func (c Client) UnbindPort(portID string) (*PortBindingDetail, error) {
+	if portID == "" {
+		return nil, fmt.Errorf("invalid portID: empty not allowed")
+	}
+
+	noHost := ""
+	noOwner := ""
+	updateOpts := portsbinding.UpdateOptsExt{
+		HostID: &noHost,
+		UpdateOptsBuilder: ports.UpdateOpts{
+			DeviceOwner: &noOwner,
+		},
+	}
+	result := ports.Update(c.ServiceClient, portID, updateOpts)
+	detail := PortBindingDetail{}
+	if err := result.ExtractInto(&detail); err != nil {
+		return nil, fmt.Errorf("failed to unbind port %s: %v", portID, err)
+	}
+
+	return &detail, nil
+}
