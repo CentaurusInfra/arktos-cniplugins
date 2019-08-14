@@ -9,9 +9,10 @@ import (
 	"github.com/futurewei-cloud/alktron/neutron"
 	"github.com/futurewei-cloud/alktron/nsvtep"
 	"github.com/futurewei-cloud/alktron/ovsplug"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
-
 	"github.com/futurewei-cloud/alktron/vnic"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
+	log "github.com/sirupsen/logrus"
+	"github.com/uber-go/multierr"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -32,6 +33,7 @@ type EPnic struct {
 type PortGetBinder interface {
 	GetPort(portID string) (*neutron.PortBindingDetail, error)
 	BindPort(portID, hostID, devID string) (*neutron.PortBindingDetail, error)
+	UnbindPort(portID string) (*neutron.PortBindingDetail, error)
 }
 
 // SubnetGetter is the interface able to get neutron subnet detail
@@ -44,10 +46,11 @@ type LocalHostPlugger interface {
 	Plug() error
 }
 
-// DevNetnsManager is the interface which manages (attaches) endpoint device
+// DevNetnsManager is the interface which manages (attach/detach) endpoint device
 // inside specified netns connecting to the local host bridge
 type DevNetnsManager interface {
 	Attach(dev string, mac net.HardwareAddr, ipnet *net.IPNet, gw *net.IP, prio int, hostBr string) error
+	Detach(dev string, hostBr string) error
 }
 
 // Plugger represents the vnic plugger which does all the steps to turn vnic into
@@ -136,8 +139,33 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (
 }
 
 // Unplug cleans up network resources allocated for the vnic
-func (p Plugger) Unplug(vnic *vnic.VNIC, devID, boundHost string) error {
-	return fmt.Errorf("to be implemeneted")
+func (p Plugger) Unplug(vnic *vnic.VNIC) error {
+	portID := vnic.PortID
+
+	// sequence of unplug:
+	// 1- delete veth pair across netns with tap vtep at root ns
+	// todo: refactor get bridge name into a reusable func
+	portPrefix := portID
+	if len(portID) > 11 {
+		portPrefix = portID[:11]
+	}
+	qbr := "qbr" + portPrefix
+	err1 := p.DevNetnsPlugger.Detach(vnic.Name, qbr)
+
+	// 2- unplug vif
+	// todo: rewrite generator to get rid of dummy("") params - to
+	//       have hybrid plug generated able to be created when veth pair etc already exists
+	//       after cni ADD op was processed
+	ovshybridplug, err2 := p.HybridPlugGen(portID, "", "")
+	if err2 == nil {
+		err2 = ovshybridplug.Unplug()
+	}
+
+	// 3- neutron port unbind
+	out, err3 := p.PortGetBinder.UnbindPort(portID)
+	log.Warnf("unbind port got error: %v, returned port detail: %v", err3, out)
+
+	return multierr.Combine(err1, err2, err3)
 }
 
 func (p Plugger) ensureStatusActive(portID string) error {

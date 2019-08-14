@@ -23,6 +23,7 @@ type HybridPlug struct {
 // LocalPlugger is the interface which construct local ovs hybrid plug
 type LocalPlugger interface {
 	Plug() error
+	Unplug() error
 	GetLocalBridge() string
 }
 
