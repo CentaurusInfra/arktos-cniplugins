@@ -28,6 +28,11 @@ func (m *mockPortGetBinder) BindPort(portID, hostID, devID string) (*neutron.Por
 	return args.Get(0).(*neutron.PortBindingDetail), args.Error(1)
 }
 
+func (m *mockPortGetBinder) UnbindPort(portID string) (*neutron.PortBindingDetail, error) {
+	args := m.Called(portID)
+	return args.Get(0).(*neutron.PortBindingDetail), args.Error(1)
+}
+
 type mockSubnetGetter struct {
 	mock.Mock
 }
@@ -46,6 +51,11 @@ func (m *mockLocalPlugger) Plug() error {
 	return args.Error(0)
 }
 
+func (m *mockLocalPlugger) Unplug() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
 func (m *mockLocalPlugger) GetLocalBridge() string {
 	args := m.Called()
 	return args.String(0)
@@ -57,6 +67,11 @@ type mockDevNetnsManager struct {
 
 func (m *mockDevNetnsManager) Attach(dev string, mac net.HardwareAddr, ipnet *net.IPNet, gw *net.IP, prio int, hostBr string) error {
 	args := m.Called(dev, mac, ipnet, gw, prio, hostBr)
+	return args.Error(0)
+}
+
+func (m *mockDevNetnsManager) Detach(dev, hostBr string) error {
+	args := m.Called(dev, hostBr)
 	return args.Error(0)
 }
 
@@ -146,4 +161,43 @@ func TestPlug(t *testing.T) {
 	mockLocalPlugger.AssertExpectations(t)
 	mockPortGetBinder.AssertExpectations(t)
 	mockDevNetnsManager.AssertExpectations(t)
+}
+
+func TestUnplug(t *testing.T) {
+	t.Logf("testing vnicplugger unplug")
+
+	vnicName := "test1"
+	vnicPortID := "portid12345"
+	vnic := &vnic.VNIC{
+		Name:   vnicName,
+		PortID: vnicPortID,
+	}
+
+	mockDevNetnsManager := &mockDevNetnsManager{}
+	mockDevNetnsManager.On("Detach", vnicName, "qbr"+vnicPortID).Return(nil)
+
+	mockLocalPlugger := &mockLocalPlugger{}
+	mockLocalPlugger.On("Unplug").Return(nil)
+
+	hybridPlugGen := func(portID, mac, vm string) (ovsplug.LocalPlugger, error) {
+		return mockLocalPlugger, nil
+	}
+
+	mockPortGetBinder := &mockPortGetBinder{}
+	portBindingDetail := &neutron.PortBindingDetail{}
+	mockPortGetBinder.On("UnbindPort", vnicPortID).Return(portBindingDetail, nil)
+
+	plugger := vnicplug.Plugger{
+		DevNetnsPlugger: mockDevNetnsManager,
+		HybridPlugGen:   hybridPlugGen,
+		PortGetBinder:   mockPortGetBinder,
+	}
+
+	if err := plugger.Unplug(vnic); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	mockDevNetnsManager.AssertExpectations(t)
+	mockLocalPlugger.AssertExpectations(t)
+	mockPortGetBinder.AssertExpectations(t)
 }

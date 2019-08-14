@@ -93,14 +93,8 @@ func cmdDel(args *skel.CmdArgs) error {
 		return fmt.Errorf("failed to get neutron client: %v", err)
 	}
 
-	hostBound := nc.Host
-	if hostBound == "" {
-		// todo: use localhost as default
-		return fmt.Errorf("invalid config: Host not specified")
-	}
-
 	plugger := vnicplug.NewPlugger(neutronClient, args.Netns)
-	return detachVNICs(plugger, vnics.NICs, args.ContainerID, hostBound)
+	return detachVNICs(plugger, vnics.NICs)
 }
 
 func cmdCheck(args *skel.CmdArgs) error {

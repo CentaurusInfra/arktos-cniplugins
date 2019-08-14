@@ -20,8 +20,8 @@ func (m *mockPlugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio i
 	return args.Get(0).(*vnicplug.EPnic), args.Error(1)
 }
 
-func (m *mockPlugger) Unplug(vnic *vnic.VNIC, devID, boundHost string) error {
-	args := m.Called(vnic, devID, boundHost)
+func (m *mockPlugger) Unplug(vnic *vnic.VNIC) error {
+	args := m.Called(vnic)
 	return args.Error(0)
 }
 
@@ -89,13 +89,11 @@ func TestAttachVNICs(t *testing.T) {
 
 func TestDetachVNICs(t *testing.T) {
 	vn := vnic.VNIC{}
-	devID := "alktron:1234"
-	host := "my-host"
 
 	mockPlugger := &mockPlugger{}
-	mockPlugger.On("Unplug", &vn, devID, host).Return(nil)
+	mockPlugger.On("Unplug", &vn).Return(nil)
 
-	if err := detachVNICs(mockPlugger, []vnic.VNIC{vn}, devID, host); err != nil {
+	if err := detachVNICs(mockPlugger, []vnic.VNIC{vn}); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
