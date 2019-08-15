@@ -46,6 +46,11 @@ type mockLocalPlugger struct {
 	mock.Mock
 }
 
+func (m *mockLocalPlugger) InitDevices() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
 func (m *mockLocalPlugger) Plug() error {
 	args := m.Called()
 	return args.Error(0)
@@ -118,11 +123,12 @@ func TestPlug(t *testing.T) {
 	mockSubnetGetter.On("GetSubnet", subnetID).Return(subnetDetail, nil)
 
 	mockLocalPlugger := &mockLocalPlugger{}
+	mockLocalPlugger.On("InitDevices").Return(nil)
 	mockLocalPlugger.On("Plug").Return(nil)
 	mockLocalPlugger.On("GetLocalBridge").Return(qbr)
 
-	hybridPlugGen := func(portID, mac, vm string) (ovsplug.LocalPlugger, error) {
-		return mockLocalPlugger, nil
+	hybridPlugGen := func(portID, mac, vm string) ovsplug.LocalPlugger {
+		return mockLocalPlugger
 	}
 
 	mockDevNetnsManager := &mockDevNetnsManager{}
@@ -179,8 +185,8 @@ func TestUnplug(t *testing.T) {
 	mockLocalPlugger := &mockLocalPlugger{}
 	mockLocalPlugger.On("Unplug").Return(nil)
 
-	hybridPlugGen := func(portID, mac, vm string) (ovsplug.LocalPlugger, error) {
-		return mockLocalPlugger, nil
+	hybridPlugGen := func(portID, mac, vm string) ovsplug.LocalPlugger {
+		return mockLocalPlugger
 	}
 
 	mockPortGetBinder := &mockPortGetBinder{}

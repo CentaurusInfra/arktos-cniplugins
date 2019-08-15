@@ -15,6 +15,7 @@ type HybridPlug struct {
 	MACAddr       string
 	VMID          string
 
+	// network device resources
 	OVSBridge   ExtResBridge
 	LinuxBridge Bridge
 	Qvo, Qvb    NamedDevice
@@ -22,6 +23,7 @@ type HybridPlug struct {
 
 // LocalPlugger is the interface which construct local ovs hybrid plug
 type LocalPlugger interface {
+	InitDevices() error
 	Plug() error
 	Unplug() error
 	GetLocalBridge() string
@@ -49,33 +51,41 @@ type NamedDevice interface {
 }
 
 // NewHybridPlug creates an ovs hybrid plug for the neutron port
-func NewHybridPlug(portID, mac, vm string) (LocalPlugger, error) {
+// Only informational data is populated in this new func;
+// the underlying network devices will be created in separate method, InitDevices
+func NewHybridPlug(portID, mac, vm string) LocalPlugger {
+	return &HybridPlug{
+		NeutronPortID: portID,
+		MACAddr:       mac,
+		VMID:          vm,
+	}
+}
+
+// InitDevices creates underlying network devices (qbr, qvb/qvo veth pair) of hybrid plug
+func (h HybridPlug) InitDevices() error {
 	// Openstack convention to pick the first 11 chars of port id
-	portPrefix := portID
-	if len(portID) > 11 {
-		portPrefix = portID[:11]
+	portPrefix := h.NeutronPortID
+	if len(portPrefix) > 11 {
+		portPrefix = portPrefix[:11]
 	}
 
 	lbr, err := NewLinuxBridge("qbr" + portPrefix)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create ovs hybrid plug for port id %q: %v", portID, err)
+		return fmt.Errorf("failed to create ovs hybrid plug for port id %q: %v", h.NeutronPortID, err)
 	}
 
 	veth, err := NewVeth("qvb"+portPrefix, "qvo"+portPrefix)
 	if err != nil {
 		// todo: cleanup linux bridge
-		return nil, fmt.Errorf("failed to create ovs hybrid plug for port id %q: %v", portID, err)
+		return fmt.Errorf("failed to create ovs hybrid plug for port id %q: %v", h.NeutronPortID, err)
 	}
 
-	return &HybridPlug{
-		NeutronPortID: portID,
-		MACAddr:       mac,
-		VMID:          vm,
-		OVSBridge:     NewOVSBridge(ovsbridge),
-		LinuxBridge:   lbr,
-		Qvb:           veth.EP,
-		Qvo:           veth.PeerEP,
-	}, nil
+	h.OVSBridge = NewOVSBridge(ovsbridge)
+	h.LinuxBridge = lbr
+	h.Qvb = veth.EP
+	h.Qvo = veth.PeerEP
+
+	return nil
 }
 
 // Plug creates needed devices and connects them properly
