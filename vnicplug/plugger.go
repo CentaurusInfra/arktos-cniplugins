@@ -58,7 +58,7 @@ type DevNetnsManager interface {
 type Plugger struct {
 	PortGetBinder   PortGetBinder
 	SubnetGetter    SubnetGetter
-	HybridPlugGen   func(portID, mac, vm string) (ovsplug.LocalPlugger, error)
+	HybridPlugGen   func(portID, mac, vm string) ovsplug.LocalPlugger
 	DevNetnsPlugger DevNetnsManager
 
 	probeInterval time.Duration
@@ -106,10 +106,12 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (
 		return nil, fmt.Errorf("failed to plug vnic on port binding; port has invalid mac address: %v", err)
 	}
 
-	ovshybridplug, err := p.HybridPlugGen(portID, mac.String(), devID)
-	if err != nil {
+	ovshybridplug := p.HybridPlugGen(portID, mac.String(), devID)
+
+	if err := ovshybridplug.InitDevices(); err != nil {
 		return nil, fmt.Errorf("failed to plug vnic on ovs hybrid creation: %v", err)
 	}
+
 	if err = ovshybridplug.Plug(); err != nil {
 		return nil, fmt.Errorf("failed to plug vnic on ovs hybrid plug: %v", err)
 	}
@@ -153,13 +155,9 @@ func (p Plugger) Unplug(vnic *vnic.VNIC) error {
 	err1 := p.DevNetnsPlugger.Detach(vnic.Name, qbr)
 
 	// 2- unplug vif
-	// todo: rewrite generator to get rid of dummy("") params - to
-	//       have hybrid plug generated able to be created when veth pair etc already exists
-	//       after cni ADD op was processed
-	ovshybridplug, err2 := p.HybridPlugGen(portID, "", "")
-	if err2 == nil {
-		err2 = ovshybridplug.Unplug()
-	}
+	// todo: change hybrid signature to get rid of dummy params
+	ovshybridplug := p.HybridPlugGen(portID, "", "")
+	err2 := ovshybridplug.Unplug()
 
 	// 3- neutron port unbind
 	out, err3 := p.PortGetBinder.UnbindPort(portID)
