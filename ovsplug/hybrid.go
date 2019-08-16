@@ -59,18 +59,14 @@ func NewHybridPlug(portID string) LocalPlugger {
 
 // InitDevices creates underlying network devices (qbr, qvb/qvo veth pair) of hybrid plug
 func (h HybridPlug) InitDevices() error {
-	// Openstack convention to pick the first 11 chars of port id
-	portPrefix := h.NeutronPortID
-	if len(portPrefix) > 11 {
-		portPrefix = portPrefix[:11]
-	}
-
-	lbr, err := NewLinuxBridge("qbr" + portPrefix)
+	brName := GetBridgeName(h.NeutronPortID)
+	lbr, err := NewLinuxBridge(brName)
 	if err != nil {
 		return fmt.Errorf("failed to create ovs hybrid plug for port id %q: %v", h.NeutronPortID, err)
 	}
 
-	veth, err := NewVeth("qvb"+portPrefix, "qvo"+portPrefix)
+	qvb, qvo := getVTEPName(h.NeutronPortID)
+	veth, err := NewVeth(qvb, qvo)
 	if err != nil {
 		// todo: cleanup linux bridge
 		return fmt.Errorf("failed to create ovs hybrid plug for port id %q: %v", h.NeutronPortID, err)
@@ -109,4 +105,25 @@ func (h HybridPlug) Unplug() error {
 		h.OVSBridge.DeletePort(h.Qvo.GetName()),
 		h.LinuxBridge.DeletePort(h.Qvb.GetName()),
 		h.LinuxBridge.Delete())
+}
+
+// GetBridgeName gets the linux bridge name qbrxxxx-xx based on openstack convention
+func GetBridgeName(portID string) string {
+	return "qbr" + getPortPrefix(portID)
+}
+
+func getVTEPName(portID string) (string, string) {
+	portPrefix := getPortPrefix(portID)
+	return "qvb" + portPrefix, "qvo" + portPrefix
+}
+
+func getPortPrefix(portID string) string {
+	// Openstack convention to pick the first 11 chars of port id
+	const lenPortIDPrefix = 11
+	portPrefix := portID
+	if len(portID) > lenPortIDPrefix {
+		portPrefix = portID[:lenPortIDPrefix]
+	}
+
+	return portPrefix
 }
