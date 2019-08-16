@@ -51,8 +51,8 @@ func (m *mockLocalPlugger) InitDevices() error {
 	return args.Error(0)
 }
 
-func (m *mockLocalPlugger) Plug() error {
-	args := m.Called()
+func (m *mockLocalPlugger) Plug(mac, vm string) error {
+	args := m.Called(mac, vm)
 	return args.Error(0)
 }
 
@@ -124,10 +124,10 @@ func TestPlug(t *testing.T) {
 
 	mockLocalPlugger := &mockLocalPlugger{}
 	mockLocalPlugger.On("InitDevices").Return(nil)
-	mockLocalPlugger.On("Plug").Return(nil)
+	mockLocalPlugger.On("Plug", mac, devID).Return(nil)
 	mockLocalPlugger.On("GetLocalBridge").Return(qbr)
 
-	hybridPlugGen := func(portID, mac, vm string) ovsplug.LocalPlugger {
+	hybridPlugGen := func(portID string) ovsplug.LocalPlugger {
 		return mockLocalPlugger
 	}
 
@@ -185,7 +185,7 @@ func TestUnplug(t *testing.T) {
 	mockLocalPlugger := &mockLocalPlugger{}
 	mockLocalPlugger.On("Unplug").Return(nil)
 
-	hybridPlugGen := func(portID, mac, vm string) ovsplug.LocalPlugger {
+	hybridPlugGen := func(portID string) ovsplug.LocalPlugger {
 		return mockLocalPlugger
 	}
 

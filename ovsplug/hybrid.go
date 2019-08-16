@@ -12,8 +12,6 @@ const ovsbridge = "br-int"
 // seen as qbr <--> qvb <--> qvo <--> br-int
 type HybridPlug struct {
 	NeutronPortID string
-	MACAddr       string
-	VMID          string
 
 	// network device resources
 	OVSBridge   ExtResBridge
@@ -24,7 +22,7 @@ type HybridPlug struct {
 // LocalPlugger is the interface which construct local ovs hybrid plug
 type LocalPlugger interface {
 	InitDevices() error
-	Plug() error
+	Plug(mac, vm string) error
 	Unplug() error
 	GetLocalBridge() string
 }
@@ -53,11 +51,9 @@ type NamedDevice interface {
 // NewHybridPlug creates an ovs hybrid plug for the neutron port
 // Only informational data is populated in this new func;
 // the underlying network devices will be created in separate method, InitDevices
-func NewHybridPlug(portID, mac, vm string) LocalPlugger {
+func NewHybridPlug(portID string) LocalPlugger {
 	return &HybridPlug{
 		NeutronPortID: portID,
-		MACAddr:       mac,
-		VMID:          vm,
 	}
 }
 
@@ -89,8 +85,8 @@ func (h HybridPlug) InitDevices() error {
 }
 
 // Plug creates needed devices and connects them properly
-func (h HybridPlug) Plug() error {
-	out, err := h.OVSBridge.AddPortAndSetExtResources(h.Qvo.GetName(), h.NeutronPortID, "active", h.MACAddr, h.VMID)
+func (h HybridPlug) Plug(mac, vm string) error {
+	out, err := h.OVSBridge.AddPortAndSetExtResources(h.Qvo.GetName(), h.NeutronPortID, "active", mac, vm)
 	if err != nil {
 		return fmt.Errorf("plug failed on setting external-ids, %s: %v", string(out), err)
 	}
