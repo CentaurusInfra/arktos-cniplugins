@@ -78,8 +78,6 @@ func TestHybridPlug(t *testing.T) {
 
 	h := ovsplug.HybridPlug{
 		NeutronPortID: portID,
-		MACAddr:       mac,
-		VMID:          vm,
 
 		OVSBridge:   mockOVSBr,
 		LinuxBridge: mockLxBr,
@@ -87,7 +85,7 @@ func TestHybridPlug(t *testing.T) {
 		Qvo:         mockqvo,
 	}
 
-	if err := h.Plug(); err != nil {
+	if err := h.Plug(mac, vm); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
@@ -101,8 +99,6 @@ func TestHybridUnplug(t *testing.T) {
 	qvoPort := "qvo123456789"
 	qvbPort := "qvb123456789"
 	portID := "1234567890abcdef"
-	mac := "aa:bb:cc:dd:ee:ff"
-	vm := "libvirt-vm-id"
 
 	mockOVSBr := &mockExtResBridge{}
 	mockOVSBr.On("DeletePort", qvoPort).Return(nil)
@@ -118,8 +114,6 @@ func TestHybridUnplug(t *testing.T) {
 
 	h := ovsplug.HybridPlug{
 		NeutronPortID: portID,
-		MACAddr:       mac,
-		VMID:          vm,
 
 		OVSBridge:   mockOVSBr,
 		LinuxBridge: mockLxBr,
