@@ -32,9 +32,9 @@ go build ./
 * /etc/cni/net.d/mynet.conf
 ```json
 { 
-    “cniVersion”:”0.3.1”,
-	“name”: “mynet”,
-	“type”: “alktron”
+    "cniVersion":"0.3.1",
+	"name": "mynet",
+	"type": "alktron"
 }
 ```
 * /etc/alktron/neutron.json
