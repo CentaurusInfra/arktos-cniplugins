@@ -16,7 +16,7 @@ type HybridPlug struct {
 	// network device resources
 	OVSBridge   ExtResBridge
 	LinuxBridge Bridge
-	Qvo, Qvb    NamedDevice
+	Qvo, Qvb    string
 }
 
 // LocalPlugger is the interface which construct local ovs hybrid plug
@@ -30,6 +30,7 @@ type LocalPlugger interface {
 // Bridge is the interface of device with ports attached
 type Bridge interface {
 	NamedDevice
+	InitDevice() error
 	AddPort(port string) error
 	DeletePort(port string) error
 	Delete() error
@@ -52,42 +53,42 @@ type NamedDevice interface {
 // Only informational data is populated in this new func;
 // the underlying network devices will be created in separate method, InitDevices
 func NewHybridPlug(portID string) LocalPlugger {
+	brName := GetBridgeName(portID)
+	qvb, qvo := getVTEPName(portID)
+
 	return &HybridPlug{
 		NeutronPortID: portID,
+		OVSBridge:     NewOVSBridge(ovsbridge),
+		LinuxBridge:   NewLinuxBridge(brName),
+		Qvo:           qvo,
+		Qvb:           qvb,
 	}
 }
 
 // InitDevices creates underlying network devices (qbr, qvb/qvo veth pair) of hybrid plug
-func (h HybridPlug) InitDevices() error {
-	brName := GetBridgeName(h.NeutronPortID)
-	lbr, err := NewLinuxBridge(brName)
-	if err != nil {
+func (h *HybridPlug) InitDevices() error {
+	if err := h.LinuxBridge.InitDevice(); err != nil {
 		return fmt.Errorf("failed to create ovs hybrid plug for port id %q: %v", h.NeutronPortID, err)
 	}
 
 	qvb, qvo := getVTEPName(h.NeutronPortID)
-	veth, err := NewVeth(qvb, qvo)
+	_, err := NewVeth(qvb, qvo)
 	if err != nil {
 		// todo: cleanup linux bridge
 		return fmt.Errorf("failed to create ovs hybrid plug for port id %q: %v", h.NeutronPortID, err)
 	}
 
-	h.OVSBridge = NewOVSBridge(ovsbridge)
-	h.LinuxBridge = lbr
-	h.Qvb = veth.EP
-	h.Qvo = veth.PeerEP
-
 	return nil
 }
 
 // Plug creates needed devices and connects them properly
-func (h HybridPlug) Plug(mac, vm string) error {
-	out, err := h.OVSBridge.AddPortAndSetExtResources(h.Qvo.GetName(), h.NeutronPortID, "active", mac, vm)
+func (h *HybridPlug) Plug(mac, vm string) error {
+	out, err := h.OVSBridge.AddPortAndSetExtResources(h.Qvo, h.NeutronPortID, "active", mac, vm)
 	if err != nil {
 		return fmt.Errorf("plug failed on setting external-ids, %s: %v", string(out), err)
 	}
 
-	if err = h.LinuxBridge.AddPort(h.Qvb.GetName()); err != nil {
+	if err = h.LinuxBridge.AddPort(h.Qvb); err != nil {
 		return fmt.Errorf("plug failed on adding qvb to qbr: %v", err)
 	}
 
@@ -95,16 +96,17 @@ func (h HybridPlug) Plug(mac, vm string) error {
 }
 
 // GetLocalBridge gets the local Linuxbridge name
-func (h HybridPlug) GetLocalBridge() string {
+func (h *HybridPlug) GetLocalBridge() string {
 	return h.LinuxBridge.GetName()
 }
 
 // Unplug cleans up network devices allocated for this hybrid structure
-func (h HybridPlug) Unplug() error {
+func (h *HybridPlug) Unplug() error {
 	return multierr.Combine(
-		h.OVSBridge.DeletePort(h.Qvo.GetName()),
-		h.LinuxBridge.DeletePort(h.Qvb.GetName()),
-		h.LinuxBridge.Delete())
+		h.OVSBridge.DeletePort(h.Qvo),
+		h.LinuxBridge.DeletePort(h.Qvb),
+		h.LinuxBridge.Delete(),
+	)
 }
 
 // GetBridgeName gets the linux bridge name qbrxxxx-xx based on openstack convention

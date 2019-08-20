@@ -19,13 +19,8 @@ func (ep VethEP) GetName() string {
 
 // RemoveVEP removes vtep device (effectively w/ its peer)
 func RemoveVEP(name string) error {
-	ep := getVethEP(name)
-	if ep == nil {
-		return fmt.Errorf("unable to locate vtep named %q", name)
-	}
-
-	if err := netlink.LinkDel(*ep.BridgePort.NetlinkDev); err != nil {
-		return fmt.Errorf("failed to remove veth vtep %q: %v", ep.Name, err)
+	if err := deleteDev(name); err != nil {
+		return fmt.Errorf("failed to delete vtep %q: %v", name, err)
 	}
 
 	return nil
