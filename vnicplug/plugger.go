@@ -146,12 +146,7 @@ func (p Plugger) Unplug(vnic *vnic.VNIC) error {
 
 	// sequence of unplug:
 	// 1- delete veth pair across netns with tap vtep at root ns
-	// todo: refactor get bridge name into a reusable func
-	portPrefix := portID
-	if len(portID) > 11 {
-		portPrefix = portID[:11]
-	}
-	qbr := "qbr" + portPrefix
+	qbr := ovsplug.GetBridgeName(portID)
 	err1 := p.DevNetnsPlugger.Detach(vnic.Name, qbr)
 
 	// 2- unplug vif
