@@ -119,6 +119,8 @@ func getVTEPName(portID string) (string, string) {
 
 func getPortPrefix(portID string) string {
 	// Openstack convention to pick the first 11 chars of port id
+	// see https://github.com/openstack/nova/blob/4e9d2244799fb285f75056f9120201aaa408a765/nova/network/os_vif_util.py#L57
+	// & https://github.com/openstack/nova/blob/4e9d2244799fb285f75056f9120201aaa408a765/nova/network/model.py#L166
 	const lenPortIDPrefix = 11
 	portPrefix := portID
 	if len(portID) > lenPortIDPrefix {
