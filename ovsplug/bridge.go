@@ -13,8 +13,15 @@ type LinuxBridge struct {
 	linkDev *netlink.Link
 }
 
-// NewLinuxBridge creates a new (or retrieve an existent) local Linux bridge device, and ensures it is in up state
-func NewLinuxBridge(name string) (*LinuxBridge, error) {
+// NewLinuxBridge creates a a local Linux bridge resource struct
+// The unerlying network device is created by InitDevice method
+func NewLinuxBridge(name string) *LinuxBridge {
+	return &LinuxBridge{
+		Name: name,
+	}
+}
+
+func initLinuxBridge(name string) (*LinuxBridge, error) {
 	dev, err := netlink.LinkByName(name)
 	if err != nil {
 		if _, ok := err.(netlink.LinkNotFoundError); !ok {
@@ -27,6 +34,19 @@ func NewLinuxBridge(name string) (*LinuxBridge, error) {
 
 	// named link exists; we'll take it if type is bridge, and ensure it is up
 	return createBridgeFromDev(name, dev)
+}
+
+// InitDevice creates a new (or retrieve an existent) local Linux bridge device, and ensures it is in up state
+func (br *LinuxBridge) InitDevice() error {
+	// todo: refactor code to eliminate initLinuxBridge call
+	brNew, err := initLinuxBridge(br.Name)
+	if err != nil {
+		return err
+	}
+
+	br.bridge = brNew.bridge
+	br.linkDev = brNew.linkDev
+	return nil
 }
 
 func createBridge(name string) (*LinuxBridge, error) {
@@ -105,7 +125,7 @@ func (br *LinuxBridge) GetName() string {
 
 // Delete deletes the Linux bridge (with its underlying network device)
 func (br *LinuxBridge) Delete() error {
-	if err := netlink.LinkDel(*br.linkDev); err != nil {
+	if err := deleteDev(br.Name); err != nil {
 		return fmt.Errorf("failed to delete bridge %q: %v", br.Name, err)
 	}
 
@@ -115,14 +135,23 @@ func (br *LinuxBridge) Delete() error {
 // DeletePort deletes port from local Linux bridge by deleting the associated network device
 // If the port device is in veth pair, whole veth pair would be deleted too
 func (br *LinuxBridge) DeletePort(port string) error {
-	dev, err := netlink.LinkByName(port)
-	if err != nil {
-		return fmt.Errorf("could not locate dev %q; failed to delete it from bridge %q: %v", port, br.Name, err)
-	}
-
-	if err := netlink.LinkDel(dev); err != nil {
+	if err := deleteDev(port); err != nil {
 		return fmt.Errorf("failed to delete port %q from bridge %q: %v", port, br.Name, err)
 	}
 
 	return nil
+}
+
+func deleteDev(devName string) error {
+	dev, err := netlink.LinkByName(devName)
+	if err != nil {
+		if _, ok := err.(netlink.LinkNotFoundError); !ok {
+			return fmt.Errorf("could not locate dev %q; %v", devName, err)
+		}
+
+		// named link not found; it is OK
+		return nil
+	}
+
+	return netlink.LinkDel(dev)
 }

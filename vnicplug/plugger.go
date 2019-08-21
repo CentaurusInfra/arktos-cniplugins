@@ -155,7 +155,9 @@ func (p Plugger) Unplug(vnic *vnic.VNIC) error {
 
 	// 3- neutron port unbind
 	out, err3 := p.PortGetBinder.UnbindPort(portID)
-	log.Warnf("unbind port got error: %v, returned port detail: %v", err3, out)
+	if err3 != nil {
+		log.Warnf("unbind port got error: %v, returned port detail: %v", err3, out)
+	}
 
 	return multierr.Combine(err1, err2, err3)
 }

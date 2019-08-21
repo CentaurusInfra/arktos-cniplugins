@@ -28,8 +28,8 @@ func (p Manager) Attach(dev string, mac net.HardwareAddr, ipnet *net.IPNet, gw *
 	}
 	defer netns.Close()
 
-	lxbr, err := ovsplug.NewLinuxBridge(hostBr)
-	if err != nil {
+	lxbr := ovsplug.NewLinuxBridge(hostBr)
+	if err := lxbr.InitDevice(); err != nil {
 		return fmt.Errorf("failed to create bridge %q: %v", hostBr, err)
 	}
 

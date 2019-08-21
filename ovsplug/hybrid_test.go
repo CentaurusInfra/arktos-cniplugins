@@ -21,6 +21,11 @@ func (o *mockBridge) GetName() string {
 	return args.String(0)
 }
 
+func (o *mockBridge) InitDevice() error {
+	args := o.Called()
+	return args.Error(0)
+}
+
 func (o *mockBridge) DeletePort(port string) error {
 	args := o.Called(port)
 	return args.Error(0)
@@ -71,26 +76,19 @@ func TestHybridPlug(t *testing.T) {
 	mockLxBr := &mockBridge{}
 	mockLxBr.On("AddPort", "qvb123456789").Return(nil)
 
-	mockqvb := &mockVEP{}
-	mockqvb.On("GetName").Return("qvb123456789")
-	mockqvo := &mockVEP{}
-	mockqvo.On("GetName").Return("qvo123456789")
-
 	h := ovsplug.HybridPlug{
 		NeutronPortID: portID,
 
 		OVSBridge:   mockOVSBr,
 		LinuxBridge: mockLxBr,
-		Qvb:         mockqvb,
-		Qvo:         mockqvo,
+		Qvb:         "qvb123456789",
+		Qvo:         "qvo123456789",
 	}
 
 	if err := h.Plug(mac, vm); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	mockqvo.AssertExpectations(t)
-	mockqvb.AssertExpectations(t)
 	mockLxBr.AssertExpectations(t)
 	mockOVSBr.AssertExpectations(t)
 }
@@ -107,26 +105,19 @@ func TestHybridUnplug(t *testing.T) {
 	mockLxBr.On("DeletePort", qvbPort).Return(nil)
 	mockLxBr.On("Delete").Return(nil)
 
-	mockqvb := &mockVEP{}
-	mockqvb.On("GetName").Return(qvbPort)
-	mockqvo := &mockVEP{}
-	mockqvo.On("GetName").Return(qvoPort)
-
 	h := ovsplug.HybridPlug{
 		NeutronPortID: portID,
 
 		OVSBridge:   mockOVSBr,
 		LinuxBridge: mockLxBr,
-		Qvb:         mockqvb,
-		Qvo:         mockqvo,
+		Qvb:         qvbPort,
+		Qvo:         qvoPort,
 	}
 
 	if err := h.Unplug(); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	mockqvo.AssertExpectations(t)
-	mockqvb.AssertExpectations(t)
 	mockLxBr.AssertExpectations(t)
 	mockOVSBr.AssertExpectations(t)
 }

@@ -18,13 +18,13 @@ func TestBridgeNewAndUp(t *testing.T) {
 		t.Skipf("Skipping due to lack of TEST_BRIDGE env var")
 	}
 
-	br, err := ovsplug.NewLinuxBridge(brName)
+	br := ovsplug.NewLinuxBridge(brName)
 
-	if err != nil {
+	if err := br.InitDevice(); err != nil {
 		t.Errorf("unexpected error on CreateLinuxBridge: %v", err)
 	}
 
-	if err = br.SetUp(); err != nil {
+	if err := br.SetUp(); err != nil {
 		t.Errorf("unexpected error on Setup: %v", err)
 	}
 }
@@ -35,8 +35,8 @@ func TestBridgeDeleteBr(t *testing.T) {
 		t.Skipf("Skipping due to lack of TEST_BRIDGE env var")
 	}
 
-	br, err := ovsplug.NewLinuxBridge(brName)
-	if err != nil {
+	br := ovsplug.NewLinuxBridge(brName)
+	if err := br.InitDevice(); err != nil {
 		t.Skipf("skipping; test setup failed: %v", err)
 	}
 
@@ -52,8 +52,8 @@ func TestBridgeDeletePort(t *testing.T) {
 		t.Skipf("Skipping due to lack of TEST_BRIDGE & TEST_BRIDGE_PORT env var")
 	}
 
-	br, err := ovsplug.NewLinuxBridge(brName)
-	if err != nil {
+	br := ovsplug.NewLinuxBridge(brName)
+	if err := br.InitDevice(); err != nil {
 		t.Skipf("skipping; test setup failed: %v", err)
 	}
 
