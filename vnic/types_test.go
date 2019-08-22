@@ -15,8 +15,10 @@ func TestLoadVNics(t *testing.T) {
 	}{
 		{`VPC=demo;NICs=[]`, nil, true},
 		{`VPC=demo;NICs=[{}]`, nil, true},
-		{`VPC=demo;NICs=[{"portid":"123456"}]`, &vnic.VNICs{VPC: "demo", NICs: []vnic.VNIC{{Name: "eth0", PortID: "123456"}}}, false},
-		{`VPC=demo;NICs=[{"name":"eth1","portid":"123456"}]`, &vnic.VNICs{VPC: "demo", NICs: []vnic.VNIC{{Name: "eth1", PortID: "123456"}}}, false},
+		{`VPC=demo;NICs=[{"portid":"123456"}]`, &vnic.VNICs{Tenant: "default", VPC: "demo", NICs: []vnic.VNIC{{Name: "eth0", PortID: "123456"}}}, false},
+		{`Tenant= ;VPC=demo;NICs=[{"portid":"123456"}]`, &vnic.VNICs{Tenant: "default", VPC: "demo", NICs: []vnic.VNIC{{Name: "eth0", PortID: "123456"}}}, false},
+		{`Tenant=mydomain;VPC=demo;NICs=[{"portid":"123456"}]`, &vnic.VNICs{Tenant: "mydomain", VPC: "demo", NICs: []vnic.VNIC{{Name: "eth0", PortID: "123456"}}}, false},
+		{`Tenant=mydomain;VPC=demo;NICs=[{"name":"eth1","portid":"123456"}]`, &vnic.VNICs{Tenant: "mydomain", VPC: "demo", NICs: []vnic.VNIC{{Name: "eth1", PortID: "123456"}}}, false},
 	}
 
 	for _, tc := range tcs {

@@ -5,15 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/containernetworking/cni/pkg/types"
 )
 
+const tenantDefault = "default"
+
 // Args represents CNI stdin args specifically for neutron integration
 type Args struct {
 	types.CommonArgs
-	VPC  types.UnmarshallableString
-	NICs types.UnmarshallableString
+	Tenant types.UnmarshallableString
+	VPC    types.UnmarshallableString
+	NICs   types.UnmarshallableString
 }
 
 // VNIC contains individual vNic's port id and interface name
@@ -22,10 +26,11 @@ type VNIC struct {
 	PortID string `json:"portid"`
 }
 
-// VNICs contains (the single) VPC info and all nic data
+// VNICs contains (the single) Tenant + VPC info and all nic data
 type VNICs struct {
-	VPC  string
-	NICs []VNIC
+	Tenant string // correspending to openstack domain
+	VPC    string // corresponding to openstack project ID
+	NICs   []VNIC
 }
 
 // LoadVNICs extracts neutron related VNICs out of CNI args
@@ -37,6 +42,10 @@ func LoadVNICs(cniargs string) (*VNICs, error) {
 
 	if args.VPC == "" {
 		return nil, fmt.Errorf("cannot load cni args %q: empty VPC", cniargs)
+	}
+
+	if strings.TrimSpace(string(args.Tenant)) == "" {
+		args.Tenant = tenantDefault
 	}
 
 	nics := make([]VNIC, 0)
@@ -60,5 +69,8 @@ func LoadVNICs(cniargs string) (*VNICs, error) {
 
 	// todo: add more to validate nic/portid
 
-	return &VNICs{VPC: string(args.VPC), NICs: nics}, nil
+	return &VNICs{
+		Tenant: string(args.Tenant),
+		VPC:    string(args.VPC),
+		NICs:   nics}, nil
 }

@@ -40,7 +40,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("failed to load neutron config: %v", err)
 	}
 
-	neutronClient, err := nc.getNeutronClient(vnics.VPC)
+	neutronClient, err := nc.getNeutronClient(vnics.Tenant, vnics.VPC)
 	if err != nil {
 		return fmt.Errorf("failed to get neutron client: %v", err)
 	}
@@ -88,7 +88,7 @@ func cmdDel(args *skel.CmdArgs) error {
 		return fmt.Errorf("failed to load neutron config: %v", err)
 	}
 
-	neutronClient, err := nc.getNeutronClient(vnics.VPC)
+	neutronClient, err := nc.getNeutronClient(vnics.Tenant, vnics.VPC)
 	if err != nil {
 		return fmt.Errorf("failed to get neutron client: %v", err)
 	}

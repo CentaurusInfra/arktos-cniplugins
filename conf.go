@@ -34,12 +34,12 @@ func loadNeutronConfig() (*NeutronConfig, error) {
 	return c, nil
 }
 
-func (c NeutronConfig) getNeutronClient(vpc string) (*neutron.Client, error) {
+func (c NeutronConfig) getNeutronClient(domain, vpc string) (*neutron.Client, error) {
 	if err := c.validate(); err != nil {
 		return nil, err
 	}
 
-	return neutron.New(c.User, c.Password, vpc, c.IdentityURL)
+	return neutron.New(c.User, c.Password, domain, vpc, c.IdentityURL)
 }
 
 func (c NeutronConfig) validate() error {
