@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/futurewei-cloud/alktron/neutron"
 	"github.com/tkanos/gonfig"
@@ -16,9 +17,13 @@ type NeutronConfig struct {
 	Host                        string `json:"host" env:"ALKTRON_HOST"`
 	ProbeIntervalInMilliseconds uint32 `json:"interval_in_ms" env:"ALKTRON_PROBEINTERVALINMS"`
 	ProbeTimeoutInSeconds       uint32 `json:"timeout_in_sec" env:"ALKTRON_PROBETIMEOUTINSEC"`
+	Region                      string `json:"region" env:"ALKTRON_REGION"`
 }
 
-const defaultNeutronConfPath = "/etc/alktron/neutron.json"
+const (
+	defaultNeutronConfPath = "/etc/alktron/neutron.json"
+	defaultOpenStackRegion = "RegionOne"
+)
 
 func loadNeutronConfig() (*NeutronConfig, error) {
 	neutronConfPath := os.Getenv("ALKTRON_NEUTRONCONF_PATH")
@@ -31,6 +36,10 @@ func loadNeutronConfig() (*NeutronConfig, error) {
 		return nil, fmt.Errorf("failed to load neutron conf: %v", err)
 	}
 
+	if strings.TrimSpace(c.Region) == "" {
+		c.Region = defaultOpenStackRegion
+	}
+
 	return c, nil
 }
 
@@ -39,7 +48,7 @@ func (c NeutronConfig) getNeutronClient(domain, vpc string) (*neutron.Client, er
 		return nil, err
 	}
 
-	return neutron.New(c.User, c.Password, domain, vpc, c.IdentityURL)
+	return neutron.New(c.User, c.Password, c.Region, domain, vpc, c.IdentityURL)
 }
 
 func (c NeutronConfig) validate() error {
