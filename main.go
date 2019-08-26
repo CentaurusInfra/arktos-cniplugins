@@ -6,15 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/containernetworking/cni/pkg/types"
-
-	"github.com/futurewei-cloud/alktron/vnicplug"
-
-	"github.com/containernetworking/plugins/pkg/ns"
-
 	"github.com/containernetworking/cni/pkg/skel"
+	"github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/version"
+	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/futurewei-cloud/alktron/vnic"
+	"github.com/futurewei-cloud/alktron/vnicplug"
 )
 
 func cmdAdd(args *skel.CmdArgs) error {

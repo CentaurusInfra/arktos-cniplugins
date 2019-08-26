@@ -22,7 +22,7 @@ type Client struct {
 }
 
 // New creates a Neutron Client
-func New(user, password, domain, vpc, identityURL string) (*Client, error) {
+func New(user, password, region, domain, vpc, identityURL string) (*Client, error) {
 	var authOpts = gophercloud.AuthOptions{
 		IdentityEndpoint: identityURL,
 		Username:         user,
@@ -38,7 +38,7 @@ func New(user, password, domain, vpc, identityURL string) (*Client, error) {
 
 	networkClient, err := openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{
 		Name:   "neutron",
-		Region: "RegionOne", // todo: make it configurable in cni netconf file
+		Region: region,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get network service client: %v", err)
