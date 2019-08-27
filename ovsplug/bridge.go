@@ -21,7 +21,7 @@ func NewLinuxBridge(name string) *LinuxBridge {
 	}
 }
 
-// InitDevice creates a new (or retrieve an existent) local Linux bridge device, and ensures it is in up state
+// InitDevice initializes underlying device of the local Linux bridge, ensures in up state
 func (br *LinuxBridge) InitDevice() error {
 	// todo: cleanup in case of error
 	dev, err := netlink.LinkByName(br.Name)
