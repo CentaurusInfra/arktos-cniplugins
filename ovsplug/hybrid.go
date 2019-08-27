@@ -74,7 +74,6 @@ func (h *HybridPlug) InitDevices() error {
 	qvb, qvo := getVTEPName(h.NeutronPortID)
 	_, err := NewVeth(qvb, qvo)
 	if err != nil {
-		// todo: cleanup linux bridge
 		return fmt.Errorf("failed to create ovs hybrid plug for port id %q: %v", h.NeutronPortID, err)
 	}
 

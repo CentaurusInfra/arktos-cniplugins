@@ -18,7 +18,7 @@ type Plugger interface {
 }
 
 func attachVNICs(plugger Plugger, vns []vnic.VNIC, devID, host string) (*current.Result, error) {
-	// todo: add proper cleanup in case of error
+	// todo: consider proper cleanup in case of error with multi nics
 	routePrio := initialRoutePrio
 
 	r := &current.Result{}

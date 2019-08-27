@@ -14,7 +14,6 @@ type Veth struct {
 
 // NewVeth creates a new veth pair having specific endpoint names, ensures its pairs in up state
 func NewVeth(name, peerName string) (*Veth, error) {
-	// todo: cleanup faulty veth pair in case of error
 	veth := &netlink.Veth{
 		LinkAttrs: netlink.LinkAttrs{Name: name},
 		PeerName:  peerName,
@@ -55,5 +54,3 @@ func (v *Veth) SetUp() error {
 
 	return nil
 }
-
-// todo: add Remove method
