@@ -89,7 +89,12 @@ func (p Plugger) SetProbeTimeout(timeout time.Duration) {
 
 // Plug plugs vnic and makes the endpoint present in the target netns
 func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (*EPnic, error) {
-	// todo: add proper cleanup code in case of error
+	var err error
+	defer func() {
+		if err != nil {
+			p.Unplug(vnic)
+		}
+	}()
 
 	portID := vnic.PortID
 	// todo: check port status to see if it is used already by other devID
@@ -108,7 +113,7 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (
 
 	ovshybridplug := p.HybridPlugGen(portID)
 
-	if err := ovshybridplug.InitDevices(); err != nil {
+	if err = ovshybridplug.InitDevices(); err != nil {
 		return nil, fmt.Errorf("failed to plug vnic on ovs hybrid creation: %v", err)
 	}
 

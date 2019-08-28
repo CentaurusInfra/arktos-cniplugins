@@ -23,7 +23,6 @@ func NewLinuxBridge(name string) *LinuxBridge {
 
 // InitDevice initializes underlying device of the local Linux bridge, ensures in up state
 func (br *LinuxBridge) InitDevice() error {
-	// todo: cleanup in case of error
 	dev, err := netlink.LinkByName(br.Name)
 	if err != nil {
 		if _, ok := err.(netlink.LinkNotFoundError); !ok {
@@ -52,7 +51,6 @@ func (br *LinuxBridge) InitDevice() error {
 }
 
 func createBridgeLink(name string) (netlink.Link, error) {
-	// todo: cleanup in case of error
 	la := netlink.NewLinkAttrs()
 	la.Name = name
 	newBr := &netlink.Bridge{LinkAttrs: la}
