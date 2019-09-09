@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/containernetworking/cni/pkg/types/current"
-	"github.com/futurewei-cloud/alktron/alktron/vnicplug"
-	"github.com/futurewei-cloud/alktron/vnic"
+	"github.com/futurewei-cloud/cniplugins/alktron/vnicplug"
+	"github.com/futurewei-cloud/cniplugins/vnic"
 )
 
 // route metric starts from 100, decreasing subsequentially

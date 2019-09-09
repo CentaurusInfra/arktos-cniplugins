@@ -3,7 +3,7 @@ package ovsplug_test
 import (
 	"testing"
 
-	"github.com/futurewei-cloud/alktron/alktron/ovsplug"
+	"github.com/futurewei-cloud/cniplugins/alktron/ovsplug"
 	"github.com/stretchr/testify/mock"
 )
 

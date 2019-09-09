@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/futurewei-cloud/alktron/vnic"
+	"github.com/futurewei-cloud/cniplugins/vnic"
 )
 
 func TestLoadVNics(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/futurewei-cloud/alktron/alktron/nsvtep"
+	"github.com/futurewei-cloud/cniplugins/alktron/nsvtep"
 )
 
 // sudo -E go test ./... -v -tags=integration -run NSvtepAttach to run this suite

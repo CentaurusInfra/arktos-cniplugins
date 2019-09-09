@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/futurewei-cloud/alktron/alktron/neutron"
+	"github.com/futurewei-cloud/cniplugins/alktron/neutron"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 )
