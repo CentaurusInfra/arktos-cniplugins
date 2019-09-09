@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/containernetworking/plugins/pkg/ns"
-	"github.com/futurewei-cloud/plugins/alktron/ovsplug"
+	"github.com/futurewei-cloud/cniplugins/alktron/ovsplug"
 	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )

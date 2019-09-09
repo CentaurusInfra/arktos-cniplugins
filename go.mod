@@ -1,4 +1,4 @@
-module github.com/futurewei-cloud/plugins
+module github.com/futurewei-cloud/cniplugins
 
 require (
 	github.com/containernetworking/cni v0.7.1
