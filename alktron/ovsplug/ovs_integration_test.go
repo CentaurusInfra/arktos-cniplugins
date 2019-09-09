@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/futurewei-cloud/alktron/alktron/ovsplug"
+	"github.com/futurewei-cloud/plugins/alktron/ovsplug"
 )
 
 // sudo -E go test ./... -tags=integration -v -run TestOVSXXX to run specific case

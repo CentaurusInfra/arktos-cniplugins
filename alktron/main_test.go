@@ -11,7 +11,7 @@ import (
 )
 
 func TestVersion(t *testing.T) {
-	pathToBin, err := gexec.Build("github.com/futurewei-cloud/alktron/alktron/")
+	pathToBin, err := gexec.Build("github.com/futurewei-cloud/plugins/alktron/")
 	if err != nil {
 		t.Fatalf("failed to build binary: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestVersion(t *testing.T) {
 }
 
 func TestAddWithEmptyVPC(t *testing.T) {
-	pathToBin, err := gexec.Build("github.com/futurewei-cloud/alktron/alktron/")
+	pathToBin, err := gexec.Build("github.com/futurewei-cloud/plugins/alktron/")
 	if err != nil {
 		t.Fatalf("failed to build binary: %v", err)
 	}

@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/futurewei-cloud/alktron/alktron/neutron"
+	"github.com/futurewei-cloud/plugins/alktron/neutron"
 	"github.com/tkanos/gonfig"
 )
 

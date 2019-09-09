@@ -10,8 +10,8 @@ import (
 	"github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/version"
 	"github.com/containernetworking/plugins/pkg/ns"
-	"github.com/futurewei-cloud/alktron/alktron/vnicplug"
-	"github.com/futurewei-cloud/alktron/vnic"
+	"github.com/futurewei-cloud/plugins/alktron/vnicplug"
+	"github.com/futurewei-cloud/plugins/vnic"
 )
 
 func cmdAdd(args *skel.CmdArgs) error {

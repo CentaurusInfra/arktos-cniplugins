@@ -1,4 +1,4 @@
-module github.com/futurewei-cloud/alktron
+module github.com/futurewei-cloud/plugins
 
 require (
 	github.com/containernetworking/cni v0.7.1
