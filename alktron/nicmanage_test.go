@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/containernetworking/cni/pkg/types/current"
+	"github.com/futurewei-cloud/alktron/alktron/vnicplug"
 	"github.com/futurewei-cloud/alktron/vnic"
-	"github.com/futurewei-cloud/alktron/vnicplug"
 	"github.com/stretchr/testify/mock"
 )
 
