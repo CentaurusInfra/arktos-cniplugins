@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/futurewei-cloud/alktron/neutron"
-	"github.com/futurewei-cloud/alktron/nsvtep"
-	"github.com/futurewei-cloud/alktron/ovsplug"
+	"github.com/futurewei-cloud/alktron/alktron/neutron"
+	"github.com/futurewei-cloud/alktron/alktron/nsvtep"
+	"github.com/futurewei-cloud/alktron/alktron/ovsplug"
 	"github.com/futurewei-cloud/alktron/vnic"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	log "github.com/sirupsen/logrus"
