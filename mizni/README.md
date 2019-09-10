@@ -10,4 +10,4 @@ See [design spec](https://github.com/futurewei-cloud/alkaid/blob/master/docs/des
 locate the net device (tap for now) provisioned by mizar/alioth agent, move it into cni netns with the proper ip address, route setting, etc.
 
 ## IPAM
-no IPAM needed; mizar/alioth/alcore would assign proper ip address to the net device.
+no IPAM needed; mizar/alioth/alcor would assign proper ip address to the net device.
