@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -73,4 +74,15 @@ func LoadVNICs(cniargs string) (*VNICs, error) {
 		Tenant: string(args.Tenant),
 		VPC:    string(args.VPC),
 		NICs:   nics}, nil
+}
+
+// todo - replace EPnic defined in alktron package w/ this applicable to both alktron/mizni
+
+// EPnic represents the physical endpoint NIC pluged in netns
+// corresponding to a vnic
+type EPnic struct {
+	Name    string
+	MAC     string
+	IPv4Net *net.IPNet
+	Gw      *net.IP
 }

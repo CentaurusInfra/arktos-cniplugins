@@ -3,6 +3,7 @@ package main_test
 import (
 	"bytes"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/containernetworking/cni/pkg/version"
@@ -39,4 +40,36 @@ func TestVersion(t *testing.T) {
 	}
 
 	t.Fatalf("expecting '0.3.1', got %q", supportVersions)
+}
+
+func TestAddWithEmptyNICs(t *testing.T) {
+	pathToBin, err := gexec.Build("github.com/futurewei-cloud/cniplugins/mizni/")
+	if err != nil {
+		t.Fatalf("failed to build binary: %v", err)
+	}
+	defer gexec.CleanupBuildArtifacts()
+
+	cmd := exec.Command(pathToBin, "")
+	cmd.Env = append(cmd.Env, "CNI_COMMAND=ADD")
+	cmd.Env = append(cmd.Env, "CNI_ARGS=VPC=demo;NICs=[]") //invalid cni args short of NICs
+	cmd.Env = append(cmd.Env, "CNI_CONTAINERID=c")
+	cmd.Env = append(cmd.Env, "CNI_NETNS=n")
+	cmd.Env = append(cmd.Env, "CNI_IFNAME=ens01")
+	cmd.Env = append(cmd.Env, "CNI_PATH=.")
+	cmd.Stdin = strings.NewReader(`{"cniVersion": "0.3.1","name": "dbnet", "type": "mizni"}`)
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+
+	cmd.Run()
+
+	exitCode := cmd.ProcessState.ExitCode()
+	if exitCode != 1 {
+		t.Errorf("expecting exit code 1; got %d", exitCode)
+	}
+
+	out := stdout.String()
+	t.Logf("stdout: %s", out)
+	if !strings.Contains(out, "empty nics definition") {
+		t.Errorf("stdout expecting 'empty VPC', got %q", out)
+	}
 }
