@@ -6,10 +6,42 @@ import (
 
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/version"
+	"github.com/containernetworking/plugins/pkg/ns"
+	"github.com/futurewei-cloud/cniplugins/vnic"
 )
 
 func cmdAdd(args *skel.CmdArgs) error {
-	return fmt.Errorf("to be implemeneted")
+	vnics, err := vnic.LoadVNICs(args.Args)
+	if err != nil {
+		return fmt.Errorf("ADD op failed to load cni args: %v", err)
+	}
+
+	configDecoder := version.ConfigDecoder{}
+	cniVersion, err := configDecoder.Decode(args.StdinData)
+	if err != nil {
+		return fmt.Errorf("ADD op failed to load netconf: %v", err)
+	}
+
+	netns, err := ns.GetNS(args.Netns)
+	if err != nil {
+		return fmt.Errorf("failed to open netns %q: %v", args.Netns, err)
+	}
+	defer netns.Close()
+
+	// todo - stuff plugger w/ proper one able to plug vnic from alcor-ns to cni-ns
+	var plugger plugger
+
+	r, err := attachVNICs(plugger, vnics.NICs, args.ContainerID)
+	if err != nil {
+		return fmt.Errorf("ADD op failed to attach vnics: %v", err)
+	}
+
+	versionedResult, err := r.GetAsVersion(cniVersion)
+	if err != nil {
+		return fmt.Errorf("ADD op failed to convert result: %v", err)
+	}
+
+	return versionedResult.Print()
 }
 
 func cmdDel(args *skel.CmdArgs) error {
