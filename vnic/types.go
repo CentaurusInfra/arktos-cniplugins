@@ -78,8 +78,7 @@ func LoadVNICs(cniargs string) (*VNICs, error) {
 
 // todo - replace EPnic defined in alktron package w/ this applicable to both alktron/mizni
 
-// EPnic represents the physical endpoint NIC pluged in netns
-// corresponding to a vnic
+// EPnic represents the nic endpoint pluged in netns which corresponds to a vnic
 type EPnic struct {
 	Name    string
 	MAC     string
