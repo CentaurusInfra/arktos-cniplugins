@@ -14,9 +14,9 @@ type mockDevNetConfGetter struct {
 	mock.Mock
 }
 
-func (m *mockDevNetConfGetter) GetDevNetConf(name, nsPath string) (*net.IPNet, *net.IP, string, error) {
+func (m *mockDevNetConfGetter) GetDevNetConf(name, nsPath string) (*net.IPNet, *net.IP, string, int, error) {
 	args := m.Called(name, nsPath)
-	return args.Get(0).(*net.IPNet), args.Get(1).(*net.IP), args.String(2), args.Error(3)
+	return args.Get(0).(*net.IPNet), args.Get(1).(*net.IP), args.String(2), args.Int(3), args.Error(4)
 }
 
 type mockDevProber struct {
@@ -32,14 +32,13 @@ type mockNSMigrator struct {
 	mock.Mock
 }
 
-func (m *mockNSMigrator) Migrate(nameFrom, nsFrom, nameTo, nsTo string, ipnet *net.IPNet, gw *net.IP) error {
-	args := m.Called(nameFrom, nsFrom, nameTo, nsTo, ipnet, gw)
+func (m *mockNSMigrator) Migrate(nameFrom, nsFrom, nameTo, nsTo string, ipnet *net.IPNet, gw *net.IP, mtu int) error {
+	args := m.Called(nameFrom, nsFrom, nameTo, nsTo, ipnet, gw, mtu)
 	return args.Error(0)
 }
 
 func TestPlug(t *testing.T) {
 	vpc := "88776655-deadbeef-0102"
-	nsAlcor := "/run/netns/vpc" + vpc
 	nsCNI := "nsDummy"
 
 	vn := &vnic.VNIC{
@@ -47,18 +46,22 @@ func TestPlug(t *testing.T) {
 		PortID: "12345678-ABCDEF",
 	}
 
+	nsAlcor := "/run/netns/vpc" + vpc
+	devName := "veth12345678-AB"
+
 	ipnet := &net.IPNet{IP: net.ParseIP("10.0.36.8"), Mask: net.CIDRMask(16, 32)}
 	gw := net.ParseIP("10.0.0.1")
 	mac := "3e:36:8d:75:7a:ac"
+	mtu := 1448
 
 	mockNetConfGetter := &mockDevNetConfGetter{}
-	mockNetConfGetter.On("GetDevNetConf", "veth12345678-AB", nsAlcor).Return(ipnet, &gw, mac, nil)
+	mockNetConfGetter.On("GetDevNetConf", devName, nsAlcor).Return(ipnet, &gw, mac, mtu, nil)
 
 	mockDevProber := &mockDevProber{}
-	mockDevProber.On("DeviceReady", "veth12345678-AB", nsAlcor).Return(nil)
+	mockDevProber.On("DeviceReady", devName, nsAlcor).Return(nil)
 
 	mockNSMigrator := &mockNSMigrator{}
-	mockNSMigrator.On("Migrate", "veth12345678-AB", nsAlcor, "dummy", nsCNI, ipnet, &gw).Return(nil)
+	mockNSMigrator.On("Migrate", devName, nsAlcor, vn.Name, nsCNI, ipnet, &gw, mtu).Return(nil)
 
 	expectedEPnic := &vnic.EPnic{
 		Name:    vn.Name,
