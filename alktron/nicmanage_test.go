@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/containernetworking/cni/pkg/types/current"
-	"github.com/futurewei-cloud/cniplugins/alktron/vnicplug"
 	"github.com/futurewei-cloud/cniplugins/vnic"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,9 +14,9 @@ type mockPlugger struct {
 	mock.Mock
 }
 
-func (m *mockPlugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (*vnicplug.EPnic, error) {
-	args := m.Called(vnic, devID, boundHost, routePrio)
-	return args.Get(0).(*vnicplug.EPnic), args.Error(1)
+func (m *mockPlugger) Plug(vn *vnic.VNIC, devID, boundHost string, routePrio int) (*vnic.EPnic, error) {
+	args := m.Called(vn, devID, boundHost, routePrio)
+	return args.Get(0).(*vnic.EPnic), args.Error(1)
 }
 
 func (m *mockPlugger) Unplug(vnic *vnic.VNIC) error {
@@ -40,7 +39,7 @@ func TestAttachVNICs(t *testing.T) {
 		PortID: "123456-7890",
 	}
 
-	pn0 := &vnicplug.EPnic{
+	pn0 := &vnic.EPnic{
 		Name:    nicName0,
 		MAC:     mac0,
 		IPv4Net: ipnet0,
