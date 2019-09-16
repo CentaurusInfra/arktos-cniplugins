@@ -7,6 +7,7 @@ import (
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/version"
 	"github.com/containernetworking/plugins/pkg/ns"
+	"github.com/futurewei-cloud/cniplugins/mizni/vnicmanager"
 	"github.com/futurewei-cloud/cniplugins/vnic"
 )
 
@@ -28,8 +29,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 	}
 	defer netns.Close()
 
-	// todo - stuff plugger w/ proper one able to plug vnic from alcor-ns to cni-ns
-	var plugger plugger
+	plugger := vnicmanager.New(vnics.VPC, args.Netns)
 
 	r, err := attachVNICs(plugger, vnics.NICs, args.ContainerID)
 	if err != nil {
