@@ -68,9 +68,9 @@ func (m Manager) Plug(vn *vnic.VNIC) (*vnic.EPnic, error) {
 }
 
 func getAlcorNSPath(vpc string) string {
-	// alcor agreement of alcor ns name is vpc+{full-vpc-name}
+	// alcor agreement of alcor ns name is vpc-ns{full-vpc-name}
 	// the full nspath is /run/netns/ + alcor-ns-name
-	const prefix = "/run/netns/vpc"
+	const prefix = "/run/netns/vpc-ns"
 	return prefix + vpc
 }
 

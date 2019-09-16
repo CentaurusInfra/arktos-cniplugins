@@ -46,7 +46,7 @@ func TestPlug(t *testing.T) {
 		PortID: "12345678-ABCDEF",
 	}
 
-	nsAlcor := "/run/netns/vpc" + vpc
+	nsAlcor := "/run/netns/vpc-ns" + vpc
 	devName := "veth12345678-AB"
 
 	ipnet := &net.IPNet{IP: net.ParseIP("10.0.36.8"), Mask: net.CIDRMask(16, 32)}
