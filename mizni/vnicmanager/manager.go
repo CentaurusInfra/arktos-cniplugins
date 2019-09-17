@@ -30,12 +30,14 @@ type Manager struct {
 
 // New creates the VNIC Manager
 func New(vpc, cniNS string) *Manager {
+	nsdevManager := &nsdev{}
+
 	return &Manager{
 		VPC:        vpc,
 		NScni:      cniNS,
 		DevProber:  nil, // todo: stuff with proper object
-		ConfGetter: &nsdev{},
-		NSMigrator: nil, // todo: stuff with proper object
+		ConfGetter: nsdevManager,
+		NSMigrator: nsdevManager,
 	}
 }
 
