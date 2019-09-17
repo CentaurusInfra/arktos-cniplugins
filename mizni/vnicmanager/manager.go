@@ -34,7 +34,7 @@ func New(vpc, cniNS string) *Manager {
 		VPC:        vpc,
 		NScni:      cniNS,
 		DevProber:  nil, // todo: stuff with proper object
-		ConfGetter: nil, // todo: stuff with proper devNetConfGetter
+		ConfGetter: &nsdev{},
 		NSMigrator: nil, // todo: stuff with proper object
 	}
 }
