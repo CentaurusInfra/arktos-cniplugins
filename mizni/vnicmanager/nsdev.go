@@ -154,7 +154,7 @@ func configDev(oldName, newName, nspath string, ipnet *net.IPNet, mtu int) error
 }
 
 func confNet(dev, nspath string, gw *net.IP) error {
-	// todo: multi nics may lead to multiple gw; add proper handling in that case, later.
+	// todo: add proper handling of multiple gw when revisiting multi nics case (which leads to multiple gw).
 	return ns.WithNetNSPath(nspath, func(nsOrig ns.NetNS) error {
 		if err := setLoUp(); err != nil {
 			return fmt.Errorf("unable to bring up lo dev")
