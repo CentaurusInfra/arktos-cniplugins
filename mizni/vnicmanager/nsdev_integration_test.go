@@ -1,11 +1,12 @@
 // +build integration
 
-// sudo -E go test ./... -v -tags=integration -run TestGetDevNetConf to run this suite
+// sudo -E go test ./... -v -tags=integration -run TestXXXX to run specific test case
 // need to set env var TEST_XXXX_XXX, otherwise skipped
 
 package vnicmanager
 
 import (
+	"net"
 	"os"
 	"testing"
 )
@@ -24,4 +25,23 @@ func TestGetDevNetConf(t *testing.T) {
 	}
 
 	t.Logf("ipnet=%s, gw=%s, mac=%s, mtu=%d", ipnet, gw, mac, mtu)
+}
+
+func TestNSMigrate(t *testing.T) {
+	nsFrom := os.Getenv("TEST_NSMIGRATE_NSPATH_FROM") //e.g. "/run/netns/x"
+	devFrom := os.Getenv("TEST_NSMIGRATE_NAME_FROM")  //e.g. "veth123"
+	nsTo := os.Getenv("TEST_NSMIGRATE_NSPATH_TO")     //e.g. "/run/netns/y"
+	devTo := os.Getenv("TEST_NSMIGRATE_NAME_TO")      //e.g. "eth0"
+	if nsFrom == "" || devFrom == "" || nsTo == "" || devTo == "" {
+		t.Skipf("Skipping due to lack of TEST_NSMIGRATE_NSPATH_FROM & TEST_NSMIGRATE_NAME_FROM & TEST_NSMIGRATE_NSPATH_TO & TEST_NSMIGRATE_NAME_TO")
+	}
+
+	mover := &nsdev{}
+	ipnet := &net.IPNet{IP: net.ParseIP("10.0.36.8"), Mask: net.CIDRMask(16, 32)}
+	gw := net.ParseIP("10.0.0.1")
+	mtu := 1460
+
+	if err := mover.Migrate(devFrom, nsFrom, devTo, nsTo, ipnet, &gw, mtu); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }
