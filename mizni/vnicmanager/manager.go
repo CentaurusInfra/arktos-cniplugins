@@ -12,7 +12,7 @@ type devProber interface {
 }
 
 type devNetConfGetter interface {
-	GetDevNetConf(name, nsPath string) (*net.IPNet, *net.IP, string, int, error)
+	GetDevNetConf(name, nsPath string) (*net.IPNet, *net.IP, int, string, int, error)
 }
 
 type nsMigrator interface {
@@ -52,10 +52,11 @@ func (m Manager) Plug(vn *vnic.VNIC) (*vnic.EPnic, error) {
 		return nil, fmt.Errorf("Plug vnic %q failed, dev %q not ready: %v", vn.PortID, dev, err)
 	}
 
-	ipNet, gw, mac, mtu, err := m.ConfGetter.GetDevNetConf(dev, alcorNSPath)
+	ipNet, gw, metric, mac, mtu, err := m.ConfGetter.GetDevNetConf(dev, alcorNSPath)
 	if err != nil {
 		return nil, fmt.Errorf("Plug vnic %q failed, unable to get settings: %v", vn.PortID, err)
 	}
+	_ = metric
 
 	if err := m.NSMigrator.Migrate(dev, alcorNSPath, vn.Name, m.NScni, ipNet, gw, mtu); err != nil {
 		return nil, fmt.Errorf("Plug vnic %q failed, unable to migrate to cni-ns: %v", vn.PortID, err)

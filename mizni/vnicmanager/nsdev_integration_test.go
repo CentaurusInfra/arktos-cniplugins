@@ -19,12 +19,12 @@ func TestGetDevNetConf(t *testing.T) {
 	}
 
 	devGetter := nsdev{}
-	ipnet, gw, mac, mtu, err := devGetter.GetDevNetConf(devName, vpcNS)
+	ipnet, gw, metric, mac, mtu, err := devGetter.GetDevNetConf(devName, vpcNS)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	t.Logf("ipnet=%s, gw=%s, mac=%s, mtu=%d", ipnet, gw, mac, mtu)
+	t.Logf("ipnet=%s, gw=%s, metric=%d, mac=%s, mtu=%d", ipnet, gw, metric, mac, mtu)
 }
 
 func TestNSMigrate(t *testing.T) {
