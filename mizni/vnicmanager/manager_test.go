@@ -32,8 +32,8 @@ type mockNSMigrator struct {
 	mock.Mock
 }
 
-func (m *mockNSMigrator) Migrate(nameFrom, nsFrom, nameTo, nsTo string, ipnet *net.IPNet, gw *net.IP, mtu int) error {
-	args := m.Called(nameFrom, nsFrom, nameTo, nsTo, ipnet, gw, mtu)
+func (m *mockNSMigrator) Migrate(nameFrom, nsFrom, nameTo, nsTo string, ipnet *net.IPNet, gw *net.IP, metric, mtu int) error {
+	args := m.Called(nameFrom, nsFrom, nameTo, nsTo, ipnet, gw, metric, mtu)
 	return args.Error(0)
 }
 
@@ -62,7 +62,7 @@ func TestPlug(t *testing.T) {
 	mockDevProber.On("DeviceReady", devName, nsAlcor).Return(nil)
 
 	mockNSMigrator := &mockNSMigrator{}
-	mockNSMigrator.On("Migrate", devName, nsAlcor, vn.Name, nsCNI, ipnet, &gw, mtu).Return(nil)
+	mockNSMigrator.On("Migrate", devName, nsAlcor, vn.Name, nsCNI, ipnet, &gw, metric, mtu).Return(nil)
 
 	expectedEPnic := &vnic.EPnic{
 		Name:    vn.Name,

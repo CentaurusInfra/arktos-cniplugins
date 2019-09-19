@@ -39,9 +39,10 @@ func TestNSMigrate(t *testing.T) {
 	mover := &nsdev{}
 	ipnet := &net.IPNet{IP: net.ParseIP("10.0.36.8"), Mask: net.CIDRMask(16, 32)}
 	gw := net.ParseIP("10.0.0.1")
+	metric := 101
 	mtu := 1460
 
-	if err := mover.Migrate(devFrom, nsFrom, devTo, nsTo, ipnet, &gw, mtu); err != nil {
+	if err := mover.Migrate(devFrom, nsFrom, devTo, nsTo, ipnet, &gw, metric, mtu); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

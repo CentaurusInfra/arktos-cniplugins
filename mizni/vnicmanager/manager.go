@@ -16,7 +16,7 @@ type devNetConfGetter interface {
 }
 
 type nsMigrator interface {
-	Migrate(nameFrom, nsFrom, nameTo, nsTo string, ipnet *net.IPNet, gw *net.IP, mtu int) error
+	Migrate(nameFrom, nsFrom, nameTo, nsTo string, ipnet *net.IPNet, gw *net.IP, metric, mtu int) error
 }
 
 // Manager represents the object in charge of plug single vnic
@@ -56,9 +56,8 @@ func (m Manager) Plug(vn *vnic.VNIC) (*vnic.EPnic, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Plug vnic %q failed, unable to get settings: %v", vn.PortID, err)
 	}
-	_ = metric
 
-	if err := m.NSMigrator.Migrate(dev, alcorNSPath, vn.Name, m.NScni, ipNet, gw, mtu); err != nil {
+	if err := m.NSMigrator.Migrate(dev, alcorNSPath, vn.Name, m.NScni, ipNet, gw, metric, mtu); err != nil {
 		return nil, fmt.Errorf("Plug vnic %q failed, unable to migrate to cni-ns: %v", vn.PortID, err)
 	}
 

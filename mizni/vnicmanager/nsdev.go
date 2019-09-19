@@ -5,8 +5,10 @@ import (
 	"net"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/containernetworking/plugins/pkg/ns"
+	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 
@@ -37,7 +39,7 @@ func (n nsdev) GetDevNetConf(name, nsPath string) (ipnet *net.IPNet, gw *net.IP,
 	return
 }
 
-func (n nsdev) Migrate(nameFrom, nsPathFrom, nameTo, nsPathTo string, ipnet *net.IPNet, gw *net.IP, mtu int) error {
+func (n nsdev) Migrate(nameFrom, nsPathFrom, nameTo, nsPathTo string, ipnet *net.IPNet, gw *net.IP, metric, mtu int) error {
 	if err := moveDev(nameFrom, nsPathFrom, nsPathTo); err != nil {
 		return fmt.Errorf("failed to move to target netns: %v", err)
 	}
@@ -46,7 +48,7 @@ func (n nsdev) Migrate(nameFrom, nsPathFrom, nameTo, nsPathTo string, ipnet *net
 		return fmt.Errorf("failed to config dev %s in ns %s: %v", nameTo, nsPathTo, err)
 	}
 
-	if err := confNet(nameTo, nsPathTo, gw); err != nil {
+	if err := confNet(nameTo, nsPathTo, gw, metric); err != nil {
 		return fmt.Errorf("failed to config extra settings: %v", err)
 	}
 
@@ -153,7 +155,7 @@ func configDev(oldName, newName, nspath string, ipnet *net.IPNet, mtu int) error
 	})
 }
 
-func confNet(dev, nspath string, gw *net.IP) error {
+func confNet(dev, nspath string, gw *net.IP, metric int) error {
 	// todo: add proper handling of multiple gw when revisiting multi nics case (which leads to multiple gw).
 	return ns.WithNetNSPath(nspath, func(nsOrig ns.NetNS) error {
 		if err := setLoUp(); err != nil {
@@ -161,10 +163,17 @@ func confNet(dev, nspath string, gw *net.IP) error {
 		}
 
 		defRoute := &netlink.Route{
-			Dst: nil, // default route entry
-			Gw:  *gw,
+			Dst:      nil, // default route entry
+			Gw:       *gw,
+			Priority: metric,
 		}
 		if err := netlink.RouteAdd(defRoute); err != nil {
+			// fine if the exact route entry already exists
+			if isDuplicateRouteEntryError(err) {
+				log.Infof("duplicate default routing entry %s", defRoute.String())
+				return nil
+			}
+
 			return fmt.Errorf("failed to configure nic, unable to add default route %q: %v", defRoute.String(), err)
 		}
 
@@ -199,4 +208,13 @@ func getNetns(nsPath string) (string, error) {
 	}
 
 	return nsPath[len(nsPrefix):], nil
+}
+
+func isDuplicateRouteEntryError(err error) bool {
+	syscallErr, ok := err.(syscall.Errno)
+	if !ok {
+		return false
+	}
+
+	return syscall.EEXIST == syscallErr
 }
