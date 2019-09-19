@@ -35,7 +35,7 @@ func New(vpc, cniNS string) *Manager {
 	return &Manager{
 		VPC:        vpc,
 		NScni:      cniNS,
-		DevProber:  nil, // todo: stuff with proper object
+		DevProber:  &nicProberWithTimeout{}, //todo: make timeout configurable based on cni netconf file
 		ConfGetter: nsdevManager,
 		NSMigrator: nsdevManager,
 	}
