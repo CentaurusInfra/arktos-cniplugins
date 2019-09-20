@@ -45,7 +45,19 @@ func cmdAdd(args *skel.CmdArgs) error {
 }
 
 func cmdDel(args *skel.CmdArgs) error {
-	return fmt.Errorf("to be implemeneted")
+	vnics, err := vnic.LoadVNICs(args.Args)
+	if err != nil {
+		return fmt.Errorf("DEL op failed to load cni args: %v", err)
+	}
+
+	netns, err := ns.GetNS(args.Netns)
+	if err != nil {
+		return fmt.Errorf("failed to open netns %q: %v", args.Netns, err)
+	}
+	defer netns.Close()
+
+	var unplugger unplugger
+	return detachVNICs(unplugger, vnics.NICs)
 }
 
 func cmdCheck(args *skel.CmdArgs) error {

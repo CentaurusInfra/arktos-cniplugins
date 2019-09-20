@@ -5,10 +5,15 @@ import (
 
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/futurewei-cloud/cniplugins/vnic"
+	"github.com/uber-go/multierr"
 )
 
 type plugger interface {
 	Plug(vnic *vnic.VNIC) (*vnic.EPnic, error)
+}
+
+type unplugger interface {
+	Unplug(vnic *vnic.VNIC) error
 }
 
 func attachVNICs(plugger plugger, vns []vnic.VNIC, sandbox string) (*current.Result, error) {
@@ -37,4 +42,16 @@ func attachVNICs(plugger plugger, vns []vnic.VNIC, sandbox string) (*current.Res
 	}
 
 	return r, nil
+}
+
+func detachVNICs(unplugger unplugger, vns []vnic.VNIC) error {
+	var combinedErrors error
+
+	for _, vn := range vns {
+		if err := unplugger.Unplug(&vn); err != nil {
+			combinedErrors = multierr.Combine(combinedErrors, err)
+		}
+	}
+
+	return combinedErrors
 }
