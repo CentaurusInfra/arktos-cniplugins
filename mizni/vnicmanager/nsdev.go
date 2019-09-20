@@ -5,14 +5,16 @@ import (
 	"net"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/containernetworking/plugins/pkg/ns"
+	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 
 type nsdev struct{}
 
-func (n nsdev) GetDevNetConf(name, nsPath string) (ipnet *net.IPNet, gw *net.IP, mac string, mtu int, err error) {
+func (n nsdev) GetDevNetConf(name, nsPath string) (ipnet *net.IPNet, gw *net.IP, metric int, mac string, mtu int, err error) {
 	err = ns.WithNetNSPath(nsPath, func(nsOrig ns.NetNS) error {
 		itf, err := net.InterfaceByName(name)
 		if err != nil {
@@ -27,7 +29,7 @@ func (n nsdev) GetDevNetConf(name, nsPath string) (ipnet *net.IPNet, gw *net.IP,
 			return err
 		}
 
-		if gw, err = getV4Gateway(name); err != nil {
+		if gw, metric, err = getV4Gateway(name); err != nil {
 			return err
 		}
 
@@ -37,7 +39,7 @@ func (n nsdev) GetDevNetConf(name, nsPath string) (ipnet *net.IPNet, gw *net.IP,
 	return
 }
 
-func (n nsdev) Migrate(nameFrom, nsPathFrom, nameTo, nsPathTo string, ipnet *net.IPNet, gw *net.IP, mtu int) error {
+func (n nsdev) Migrate(nameFrom, nsPathFrom, nameTo, nsPathTo string, ipnet *net.IPNet, gw *net.IP, metric, mtu int) error {
 	if err := moveDev(nameFrom, nsPathFrom, nsPathTo); err != nil {
 		return fmt.Errorf("failed to move to target netns: %v", err)
 	}
@@ -46,7 +48,7 @@ func (n nsdev) Migrate(nameFrom, nsPathFrom, nameTo, nsPathTo string, ipnet *net
 		return fmt.Errorf("failed to config dev %s in ns %s: %v", nameTo, nsPathTo, err)
 	}
 
-	if err := confNet(nameTo, nsPathTo, gw); err != nil {
+	if err := confNet(nameTo, nsPathTo, gw, metric); err != nil {
 		return fmt.Errorf("failed to config extra settings: %v", err)
 	}
 
@@ -80,29 +82,29 @@ func getFirstIPNetV4(itf *net.Interface) (*net.IPNet, error) {
 	return nil, fmt.Errorf("no ipv4 address found")
 }
 
-func getV4Gateway(device string) (*net.IP, error) {
+func getV4Gateway(device string) (*net.IP, int, error) {
 	link, _ := netlink.LinkByName(device)
 	routes, err := netlink.RouteList(link, netlink.FAMILY_V4)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get route list of dev %s: %v", device, err)
+		return nil, 0, fmt.Errorf("unable to get route list of dev %s: %v", device, err)
 	}
 
 	// try to get from the default route entry
 	for _, r := range routes {
 		if r.Dst == nil {
-			return &r.Gw, nil
+			return &r.Gw, r.Priority, nil
 		}
 	}
 
 	// fall back to first non-default entry
 	for _, r := range routes {
 		if r.Src == nil && r.Gw != nil {
-			return &r.Gw, nil
+			return &r.Gw, r.Priority, nil
 		}
 	}
 
 	// todo: consider allowing nil gw
-	return nil, fmt.Errorf("unable to identify default gateway of dev %s", device)
+	return nil, 0, fmt.Errorf("unable to identify default gateway of dev %s", device)
 }
 
 func moveDev(name, nsPathFrom, nsPathTo string) error {
@@ -153,18 +155,24 @@ func configDev(oldName, newName, nspath string, ipnet *net.IPNet, mtu int) error
 	})
 }
 
-func confNet(dev, nspath string, gw *net.IP) error {
-	// todo: add proper handling of multiple gw when revisiting multi nics case (which leads to multiple gw).
+func confNet(dev, nspath string, gw *net.IP, metric int) error {
 	return ns.WithNetNSPath(nspath, func(nsOrig ns.NetNS) error {
 		if err := setLoUp(); err != nil {
 			return fmt.Errorf("unable to bring up lo dev")
 		}
 
 		defRoute := &netlink.Route{
-			Dst: nil, // default route entry
-			Gw:  *gw,
+			Dst:      nil, // default route entry
+			Gw:       *gw,
+			Priority: metric,
 		}
 		if err := netlink.RouteAdd(defRoute); err != nil {
+			// fine if the exact route entry already exists
+			if isDuplicateRouteEntryError(err) {
+				log.Infof("duplicate default routing entry %s", defRoute.String())
+				return nil
+			}
+
 			return fmt.Errorf("failed to configure nic, unable to add default route %q: %v", defRoute.String(), err)
 		}
 
@@ -199,4 +207,13 @@ func getNetns(nsPath string) (string, error) {
 	}
 
 	return nsPath[len(nsPrefix):], nil
+}
+
+func isDuplicateRouteEntryError(err error) bool {
+	syscallErr, ok := err.(syscall.Errno)
+	if !ok {
+		return false
+	}
+
+	return syscall.EEXIST == syscallErr
 }
