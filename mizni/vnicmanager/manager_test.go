@@ -93,3 +93,44 @@ func TestPlug(t *testing.T) {
 	mockNetConfGetter.AssertExpectations(t)
 	mockNSMigrator.AssertExpectations(t)
 }
+
+func TestUnplug(t *testing.T) {
+	devName := "ens3p1"
+	nsCNI := "cni-ns"
+	vpc := "88776655-deadbeef-0102"
+	nicAlcor := "vethcafebaba"
+	nsAlcor := "/run/netns/vpc-ns" + vpc
+
+	vn := &vnic.VNIC{
+		Name:   devName,
+		PortID: "cafebaba",
+	}
+
+	ipnet := &net.IPNet{IP: net.ParseIP("10.0.36.8"), Mask: net.CIDRMask(16, 32)}
+	gw := net.ParseIP("10.0.0.1")
+	metric := 100
+	mac := "3e:36:8d:75:7a:ac"
+	mtu := 1448
+
+	mockNetConfGetter := &mockDevNetConfGetter{}
+	mockNetConfGetter.On("GetDevNetConf", devName, nsCNI).Return(ipnet, &gw, metric, mac, mtu, nil)
+	_ = mac // not used in subsequent calls
+
+	mockNSMigrator := &mockNSMigrator{}
+	mockNSMigrator.On("Migrate", devName, nsCNI, nicAlcor, nsAlcor, ipnet, &gw, metric, mtu).Return(nil)
+
+	manager := &vnicmanager.Manager{
+		VPC:        vpc,
+		NScni:      nsCNI,
+		DevProber:  nil,
+		ConfGetter: mockNetConfGetter,
+		NSMigrator: mockNSMigrator,
+	}
+
+	if err := manager.Unplug(vn); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	mockNetConfGetter.AssertExpectations(t)
+	mockNSMigrator.AssertExpectations(t)
+}
