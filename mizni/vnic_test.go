@@ -76,3 +76,25 @@ func TestAttachVNICs(t *testing.T) {
 
 	mockPlugger.AssertExpectations(t)
 }
+
+type mockUnplugger struct {
+	mock.Mock
+}
+
+func (m *mockUnplugger) Unplug(vnic *vnic.VNIC) error {
+	args := m.Called(vnic)
+	return args.Error(0)
+}
+
+func TestDeleteVNICs(t *testing.T) {
+	vn := vnic.VNIC{}
+
+	mockUnplugger := &mockUnplugger{}
+	mockUnplugger.On("Unplug", &vn).Return(nil)
+
+	if err := detachVNICs(mockUnplugger, []vnic.VNIC{vn}); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	mockUnplugger.AssertExpectations(t)
+}
