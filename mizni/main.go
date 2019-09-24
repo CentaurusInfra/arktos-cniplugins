@@ -56,8 +56,7 @@ func cmdDel(args *skel.CmdArgs) error {
 	}
 	defer netns.Close()
 
-	// todo: stuff a concrete object of unplugger
-	var unplugger unplugger
+	unplugger := vnicmanager.New(vnics.VPC, args.Netns)
 	return detachVNICs(unplugger, vnics.NICs)
 }
 

@@ -69,6 +69,22 @@ func (m Manager) Plug(vn *vnic.VNIC) (*vnic.EPnic, error) {
 	}, nil
 }
 
+// Unplug unplugs vnic
+func (m Manager) Unplug(vn *vnic.VNIC) error {
+	ipNet, gw, metric, _, mtu, err := m.ConfGetter.GetDevNetConf(vn.Name, m.NScni)
+	if err != nil {
+		return fmt.Errorf("Unplug vnic %q failed, unable to get settings: %v", vn.PortID, err)
+	}
+
+	alcorNSPath := getAlcorNSPath(m.VPC)
+	alcorDev := getDevName(vn.PortID)
+	if err := m.NSMigrator.Migrate(vn.Name, m.NScni, alcorDev, alcorNSPath, ipNet, gw, metric, mtu); err != nil {
+		return fmt.Errorf("Unplug vnic %q failed, unable to migrate to alcor-ns: %v", vn.PortID, err)
+	}
+
+	return nil
+}
+
 func getAlcorNSPath(vpc string) string {
 	// alcor agreement of alcor ns name is vpc-ns{full-vpc-name}
 	// the full nspath is /run/netns/ + alcor-ns-name
