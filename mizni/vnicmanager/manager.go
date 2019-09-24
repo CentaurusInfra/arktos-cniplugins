@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/futurewei-cloud/cniplugins/vnic"
+	log "github.com/sirupsen/logrus"
 )
 
 type devProber interface {
@@ -43,26 +44,34 @@ func New(vpc, cniNS string) *Manager {
 
 // Plug plugs vnic
 func (m Manager) Plug(vn *vnic.VNIC) (*vnic.EPnic, error) {
-	// todo: proper cleanup on error
-
 	alcorNSPath := getAlcorNSPath(m.VPC)
-	dev := getDevName(vn.PortID)
+	alcorDev := getDevName(vn.PortID)
 
-	if err := m.DevProber.DeviceReady(dev, alcorNSPath); err != nil {
-		return nil, fmt.Errorf("Plug vnic %q failed, dev %q not ready: %v", vn.PortID, dev, err)
+	if err := m.DevProber.DeviceReady(alcorDev, alcorNSPath); err != nil {
+		return nil, fmt.Errorf("Plug vnic %q failed, dev %q not ready: %v", vn.PortID, alcorDev, err)
 	}
 
-	ipNet, gw, metric, mac, mtu, err := m.ConfGetter.GetDevNetConf(dev, alcorNSPath)
+	epnic, err := m.plug(alcorDev, alcorNSPath, vn.Name, m.NScni)
 	if err != nil {
-		return nil, fmt.Errorf("Plug vnic %q failed, unable to get settings: %v", vn.PortID, err)
+		if errCleanup := m.Unplug(vn); errCleanup != nil {
+			log.Warnf("Plug vnic %q failed; cleanup had error: %v", vn.PortID, errCleanup)
+		}
+	}
+	return epnic, err
+}
+
+func (m Manager) plug(devFrom, nsPathFrom, devTo, nsPathTo string) (*vnic.EPnic, error) {
+	ipNet, gw, metric, mac, mtu, err := m.ConfGetter.GetDevNetConf(devFrom, nsPathFrom)
+	if err != nil {
+		return nil, fmt.Errorf("Plug dev %q failed; unable to get settings: %v", devFrom, err)
 	}
 
-	if err := m.NSMigrator.Migrate(dev, alcorNSPath, vn.Name, m.NScni, ipNet, gw, metric, mtu); err != nil {
-		return nil, fmt.Errorf("Plug vnic %q failed, unable to migrate to cni-ns: %v", vn.PortID, err)
+	if err := m.NSMigrator.Migrate(devFrom, nsPathFrom, devTo, nsPathTo, ipNet, gw, metric, mtu); err != nil {
+		return nil, fmt.Errorf("Plug dev %q failed, unable to migrate to cni-ns: %v", devFrom, err)
 	}
 
 	return &vnic.EPnic{
-		Name:    vn.Name,
+		Name:    devTo,
 		MAC:     mac,
 		IPv4Net: ipNet,
 		Gw:      gw,
