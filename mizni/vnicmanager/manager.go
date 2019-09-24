@@ -77,8 +77,8 @@ func (m Manager) Unplug(vn *vnic.VNIC) error {
 	}
 
 	alcorNSPath := getAlcorNSPath(m.VPC)
-	dev := getDevName(vn.PortID)
-	if err := m.NSMigrator.Migrate(vn.Name, m.NScni, dev, alcorNSPath, ipNet, gw, metric, mtu); err != nil {
+	alcorDev := getDevName(vn.PortID)
+	if err := m.NSMigrator.Migrate(vn.Name, m.NScni, alcorDev, alcorNSPath, ipNet, gw, metric, mtu); err != nil {
 		return fmt.Errorf("Unplug vnic %q failed, unable to migrate to alcor-ns: %v", vn.PortID, err)
 	}
 
