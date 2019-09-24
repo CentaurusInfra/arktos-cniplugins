@@ -1,4 +1,4 @@
-# cni simulated integration without backend Miza/Alcor
+# cni simulated integration without backend Mizar/Alcor
 
 Though mizni is developed to work for Mizar/Alcor backedn, it is actually able to run without them in certian testing circumstance, given the proper _simulated network setup_ in place. This is to verify the basic operations of mizni in a minimal env.
 
