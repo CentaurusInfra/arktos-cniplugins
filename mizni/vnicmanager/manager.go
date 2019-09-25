@@ -3,6 +3,7 @@ package vnicmanager
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/futurewei-cloud/cniplugins/vnic"
 	log "github.com/sirupsen/logrus"
@@ -30,13 +31,13 @@ type Manager struct {
 }
 
 // New creates the VNIC Manager
-func New(vpc, cniNS string) *Manager {
+func New(vpc, cniNS string, probeTimeout time.Duration) *Manager {
 	nsdevManager := &nsdev{}
 
 	return &Manager{
 		VPC:        vpc,
 		NScni:      cniNS,
-		DevProber:  &nicProberWithTimeout{}, //todo: make timeout configurable based on cni netconf file
+		DevProber:  &nicProberWithTimeout{timeout: probeTimeout},
 		ConfGetter: nsdevManager,
 		NSMigrator: nsdevManager,
 	}
