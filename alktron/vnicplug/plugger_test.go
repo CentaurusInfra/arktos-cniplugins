@@ -141,19 +141,19 @@ func TestPlug(t *testing.T) {
 		DevNetnsPlugger: mockDevNetnsManager,
 	}
 
-	vnic := vnic.VNIC{
+	vn := vnic.VNIC{
 		PortID: portID,
 		Name:   nicName,
 	}
 
-	expectedEPnic := &vnicplug.EPnic{
+	expectedEPnic := &vnic.EPnic{
 		Name:    nicName,
 		MAC:     mac,
 		Gw:      &gw,
 		IPv4Net: ipnet,
 	}
 
-	epNIC, err := plugger.Plug(&vnic, devID, boundHost, routePrio)
+	epNIC, err := plugger.Plug(&vn, devID, boundHost, routePrio)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}

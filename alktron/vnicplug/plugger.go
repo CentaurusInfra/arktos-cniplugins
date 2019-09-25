@@ -21,14 +21,6 @@ const (
 	defaultProbeTimeout  = time.Second * 15
 )
 
-// EPnic represents the physical endpoint NIC pluuged in netns
-type EPnic struct {
-	Name    string
-	MAC     string
-	IPv4Net *net.IPNet
-	Gw      *net.IP
-}
-
 // PortGetBinder is the interface able to get and bind the neutron port
 type PortGetBinder interface {
 	GetPort(portID string) (*neutron.PortBindingDetail, error)
@@ -88,15 +80,15 @@ func (p Plugger) SetProbeTimeout(timeout time.Duration) {
 }
 
 // Plug plugs vnic and makes the endpoint present in the target netns
-func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (*EPnic, error) {
+func (p Plugger) Plug(vn *vnic.VNIC, devID, boundHost string, routePrio int) (*vnic.EPnic, error) {
 	var err error
 	defer func() {
 		if err != nil {
-			p.Unplug(vnic)
+			p.Unplug(vn)
 		}
 	}()
 
-	portID := vnic.PortID
+	portID := vn.PortID
 	// todo: check port status to see if it is used already by other devID
 	// todo: check port status to see if it is already ready for this devID
 
@@ -129,7 +121,7 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (
 	}
 
 	// make the endpoint nic inside netns, and add it to qbr
-	if err = p.DevNetnsPlugger.Attach(vnic.Name, mac, ipnet, gw, routePrio, ovshybridplug.GetLocalBridge()); err != nil {
+	if err = p.DevNetnsPlugger.Attach(vn.Name, mac, ipnet, gw, routePrio, ovshybridplug.GetLocalBridge()); err != nil {
 		return nil, err
 	}
 
@@ -137,8 +129,8 @@ func (p Plugger) Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (
 		return nil, err
 	}
 
-	return &EPnic{
-		Name:    vnic.Name,
+	return &vnic.EPnic{
+		Name:    vn.Name,
 		MAC:     mac.String(),
 		IPv4Net: ipnet,
 		Gw:      gw,

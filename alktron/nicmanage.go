@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/containernetworking/cni/pkg/types/current"
-	"github.com/futurewei-cloud/cniplugins/alktron/vnicplug"
 	"github.com/futurewei-cloud/cniplugins/vnic"
 )
 
@@ -13,7 +12,7 @@ const initialRoutePrio = 100
 
 // Plugger is the plugger oversees the whole process of attaching/detaching vnic(neutron port)
 type Plugger interface {
-	Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (*vnicplug.EPnic, error)
+	Plug(vnic *vnic.VNIC, devID, boundHost string, routePrio int) (*vnic.EPnic, error)
 	Unplug(vnic *vnic.VNIC) error
 }
 
