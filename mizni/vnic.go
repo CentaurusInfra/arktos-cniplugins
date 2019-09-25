@@ -5,6 +5,7 @@ import (
 
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/futurewei-cloud/cniplugins/vnic"
+	log "github.com/sirupsen/logrus"
 	"github.com/uber-go/multierr"
 )
 
@@ -22,6 +23,9 @@ func attachVNICs(plugger plugger, vns []vnic.VNIC, sandbox string) (*current.Res
 	for i, vn := range vns {
 		nic, err := plugger.Plug(&vn)
 		if err != nil {
+			if errCleanup := detachVNICs(plugger.(unplugger), vns[:i]); errCleanup != nil {
+				log.Warnf("attach vnics aborted; cleanup had error: %v", errCleanup)
+			}
 			return nil, fmt.Errorf("failed to plug vnic %v: %v", vn, err)
 		}
 

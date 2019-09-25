@@ -1,8 +1,10 @@
 package vnicmanager_test
 
 import (
+	"errors"
 	"net"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/futurewei-cloud/cniplugins/mizni/vnicmanager"
@@ -131,6 +133,54 @@ func TestUnplug(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
+	mockNetConfGetter.AssertExpectations(t)
+	mockNSMigrator.AssertExpectations(t)
+}
+
+func TestCleanupOnPlugError(t *testing.T) {
+	vpc := "88776655-deadbeef-0102"
+	nsCNI := "nsDummy"
+
+	vn := &vnic.VNIC{
+		Name:   "dummy",
+		PortID: "12345678-ABCDEF",
+	}
+
+	nsAlcor := "/run/netns/vpc-ns" + vpc
+	devName := "veth12345678-AB"
+
+	ipnet := &net.IPNet{IP: net.ParseIP("10.0.36.8"), Mask: net.CIDRMask(16, 32)}
+	gw := net.ParseIP("10.0.0.1")
+	metric := 100
+	mac := "3e:36:8d:75:7a:ac"
+	mtu := 1448
+
+	mockNetConfGetter := &mockDevNetConfGetter{}
+	mockNetConfGetter.On("GetDevNetConf", devName, nsAlcor).Return(ipnet, &gw, metric, mac, mtu, nil)
+	mockNetConfGetter.On("GetDevNetConf", "dummy", nsCNI).Return(ipnet, &gw, metric, mac, mtu, nil)
+
+	mockDevProber := &mockDevProber{}
+	mockDevProber.On("DeviceReady", devName, nsAlcor).Return(nil)
+
+	mockNSMigrator := &mockNSMigrator{}
+	mockNSMigrator.On("Migrate", devName, nsAlcor, vn.Name, nsCNI, ipnet, &gw, metric, mtu).Return(errors.New("mocked error"))
+	mockNSMigrator.On("Migrate", vn.Name, nsCNI, devName, nsAlcor, ipnet, &gw, metric, mtu).Return(errors.New("error turned in to log warning anyway if any"))
+
+	manager := &vnicmanager.Manager{
+		VPC:        vpc,
+		NScni:      nsCNI,
+		DevProber:  mockDevProber,
+		ConfGetter: mockNetConfGetter,
+		NSMigrator: mockNSMigrator,
+	}
+
+	_, err := manager.Plug(vn)
+	t.Logf("got returned error: %v", err)
+	if err == nil || !strings.Contains(err.Error(), "mocked error") {
+		t.Fatalf("expecting mocked error; got %v", err)
+	}
+
+	mockDevProber.AssertExpectations(t)
 	mockNetConfGetter.AssertExpectations(t)
 	mockNSMigrator.AssertExpectations(t)
 }
