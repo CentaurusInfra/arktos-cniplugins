@@ -201,6 +201,13 @@ func callMizarRequesites(dev, ns string) error {
 }
 
 func getNetns(nsPath string) (string, error) {
+	const varPrefix = "/var"
+	const varLen = len(varPrefix)
+
+	if strings.HasPrefix(nsPath, varPrefix) {
+		nsPath = nsPath[varLen:]
+	}
+
 	const nsPrefix = "/run/netns/"
 	if !strings.HasPrefix(nsPath, nsPrefix) {
 		return "", fmt.Errorf("unexpected ns path %s", nsPath)
