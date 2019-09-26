@@ -18,12 +18,6 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("ADD op failed to load cni args: %v", err)
 	}
 
-	configDecoder := version.ConfigDecoder{}
-	cniVersion, err := configDecoder.Decode(args.StdinData)
-	if err != nil {
-		return fmt.Errorf("ADD op failed to identify cni version: %v", err)
-	}
-
 	netconf, err := loadNetConf(args.StdinData)
 	if err != nil {
 		return fmt.Errorf("ADD op failed to load netconf: %v", err)
@@ -42,7 +36,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("ADD op failed to attach vnics: %v", err)
 	}
 
-	versionedResult, err := r.GetAsVersion(cniVersion)
+	versionedResult, err := r.GetAsVersion(netconf.CNIVersion)
 	if err != nil {
 		return fmt.Errorf("ADD op failed to convert result: %v", err)
 	}
