@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/version"
@@ -17,8 +18,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("ADD op failed to load cni args: %v", err)
 	}
 
-	configDecoder := version.ConfigDecoder{}
-	cniVersion, err := configDecoder.Decode(args.StdinData)
+	netconf, err := loadNetConf(args.StdinData)
 	if err != nil {
 		return fmt.Errorf("ADD op failed to load netconf: %v", err)
 	}
@@ -29,14 +29,14 @@ func cmdAdd(args *skel.CmdArgs) error {
 	}
 	defer netns.Close()
 
-	plugger := vnicmanager.New(vnics.VPC, args.Netns)
+	plugger := vnicmanager.New(vnics.VPC, args.Netns, time.Millisecond*time.Duration(netconf.ProbeTimeoutInMilliseconds))
 
 	r, err := attachVNICs(plugger, vnics.NICs, args.ContainerID)
 	if err != nil {
 		return fmt.Errorf("ADD op failed to attach vnics: %v", err)
 	}
 
-	versionedResult, err := r.GetAsVersion(cniVersion)
+	versionedResult, err := r.GetAsVersion(netconf.CNIVersion)
 	if err != nil {
 		return fmt.Errorf("ADD op failed to convert result: %v", err)
 	}
@@ -56,7 +56,7 @@ func cmdDel(args *skel.CmdArgs) error {
 	}
 	defer netns.Close()
 
-	unplugger := vnicmanager.New(vnics.VPC, args.Netns)
+	unplugger := vnicmanager.New(vnics.VPC, args.Netns, 0) //probe timeout not used by unplugger; set 0 to satisfy the signiture
 	return detachVNICs(unplugger, vnics.NICs)
 }
 
