@@ -12,6 +12,8 @@ import (
 	"github.com/futurewei-cloud/cniplugins/vnic"
 )
 
+const capProbeTimeoutInMilliseconds = 1000 * 60 // 1 minute
+
 func cmdAdd(args *skel.CmdArgs) error {
 	vnics, err := vnic.LoadVNICs(args.Args)
 	if err != nil {
@@ -21,6 +23,10 @@ func cmdAdd(args *skel.CmdArgs) error {
 	netconf, err := loadNetConf(args.StdinData)
 	if err != nil {
 		return fmt.Errorf("ADD op failed to load netconf: %v", err)
+	}
+
+	if netconf.ProbeTimeoutInMilliseconds > capProbeTimeoutInMilliseconds {
+		return fmt.Errorf("Invalid netconf setting: prober timeout exceeds the cap of 60 seconds")
 	}
 
 	netns, err := ns.GetNS(args.Netns)
