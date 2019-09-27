@@ -1,17 +1,17 @@
 # multiple nics support
 
-Mizni plugin is designed to support multiple nics in one vpc. Multiple nics across different vpc are not in scope at this moment.
+Mizni plugin is designed to support multiple nics in one vpc. Multiple nics across different vpcs are not in scope at this moment.
 
 Below illustrates how we can verify its multi vnics feature.
 
 ## At standalone cni integration env
-The cni integration env is set up as instructed in [simulated_integration](simulated_integration.md)
-1. run follwoing commands inside netns vpc-nsdemo to create dev for the second port
+The cni integration env is set up as instructed in [simulated_integration](simulated_integration.md). Extra steps are listed as below:
+1. run following commands inside netns vpc-nsdemo to provision the second port
 ```bash
 ip tuntap add dev veth12345678-01 mode tap
 ip link set dev veth12345678-01 up
-ip a add 10.100.201.32/24 dev veth12345678-01
-ip r add default via 10.100.201.1 metric 101 
+ip addr add 10.100.201.32/24 dev veth12345678-01
+ip route add default via 10.100.201.1 metric 101 
 ``` 
 2. ensure netns x created
 3. invoke cni plugin by 
@@ -55,6 +55,6 @@ You should see result like
 4. inside netns x, find eth1 besides eth0, and two default routing entries.
 
 ## In kubernetes cluster
-Mizni by itself is able to hook up connectivities for multiple vnics. However, whether the workload is able to identify or use the nics other than the primary one(usually eth0) depends on other factors beyond this plugin binary, such as CRI runtime in use, workload settings. 
+Mizni by itself is able to hook up connectivities for multiple vnics. However, whether the workload is able to identify or utilize the nics other than the primary one(usually eth0) depends on other factors beyond this plugin binary, such as CRI runtime in use, workload settings. 
 
 In general case of VM workloads, VM should be configured to get ip addresses via HDCP protocol on boot for all of its nics, otherwise you may see nics having no ip address assigned.
