@@ -77,6 +77,44 @@ func TestAttachVNICs(t *testing.T) {
 	mockPlugger.AssertExpectations(t)
 }
 
+func TestAttachMultipleVNICsGetIndexFrom0(t *testing.T) {
+	vn0 := vnic.VNIC{}
+	gw0 := net.ParseIP("10.0.36.1")
+	pn0 := &vnic.EPnic{
+		IPv4Net: &net.IPNet{IP: net.ParseIP("10.0.36.8"), Mask: net.CIDRMask(24, 32)},
+		Gw:      &gw0,
+	}
+
+	vn1 := vnic.VNIC{}
+	gw1 := net.ParseIP("10.0.37.1")
+	pn1 := &vnic.EPnic{
+		IPv4Net: &net.IPNet{IP: net.ParseIP("10.0.37.8"), Mask: net.CIDRMask(24, 32)},
+		Gw:      &gw1,
+	}
+
+	mockPlugger := &mockPlugger{}
+	mockPlugger.On("Plug", &vn0).Return(pn0, nil)
+	mockPlugger.On("Plug", &vn1).Return(pn1, nil)
+
+	r, err := attachVNICs(mockPlugger, []vnic.VNIC{vn0, vn1}, "dummy")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	t.Logf("result detail: %v", r)
+
+	if len(r.IPs) != 2 {
+		t.Fatalf("expecting 2 entries; got %d", len(r.IPs))
+	}
+
+	if *r.IPs[0].Interface != 0 {
+		t.Fatalf("expecting starting from 0; got %d", *r.IPs[0].Interface)
+	}
+
+	if *r.IPs[1].Interface != 1 {
+		t.Fatalf("expecting next is 1; got %d", *r.IPs[1].Interface)
+	}
+}
+
 type mockUnplugger struct {
 	mock.Mock
 }

@@ -36,9 +36,11 @@ func attachVNICs(plugger plugger, vns []vnic.VNIC, sandbox string) (*current.Res
 		}
 		r.Interfaces = append(r.Interfaces, intf)
 
+		nicIndex := i
+
 		ip := &current.IPConfig{
 			Version:   "4", // we only care about ipv4 for now
-			Interface: &i,
+			Interface: &nicIndex,
 			Address:   *nic.IPv4Net,
 			Gateway:   *nic.Gw,
 		}
