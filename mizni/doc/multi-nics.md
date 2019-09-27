@@ -38,7 +38,7 @@ You should see result like
     "ips": [
         {
             "version": "4",
-            "interface": 1,
+            "interface": 0,
             "address": "10.100.200.18/24",
             "gateway": "10.100.200.1"
         },
