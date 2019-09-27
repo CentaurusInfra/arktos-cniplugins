@@ -57,4 +57,4 @@ You should see result like
 ## In kubernetes cluster
 Mizni by itself is able to hook up connectivities for multiple vnics. However, whether the workload is able to identify or utilize the nics other than the primary one(usually eth0) depends on other factors beyond this plugin binary, such as CRI runtime in use, workload settings. 
 
-In general case of VM workloads, VM should be configured to get ip addresses via HDCP protocol on boot for all of its nics, otherwise you may see nics having no ip address assigned.
+In general case of VM workloads, VM should be configured to get ip addresses via DHCP protocol on boot for all of its nics, otherwise you may see nics having no ip address assigned.
