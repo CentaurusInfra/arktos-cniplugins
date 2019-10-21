@@ -1,7 +1,7 @@
 # Kubernetes Service Test Report
 
 ## Purpose
-To track the verifications Kubernetes Service created based on Alktron (neutron cni plugin).
+To track the verifications of Kubernetes Service created based on Alktron (neutron cni plugin).
 
 ## Aimed Scenarios
 See [integration-test](../integration_test.md) for general instructions to prepare the onebox test env.
