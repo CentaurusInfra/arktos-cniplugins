@@ -24,3 +24,35 @@ This json file specifies the connection configuration for Alktron to talk to Neu
 | interval_in_ms | interval to probe Neutron port status | default to 500 ms | 
 | timeout_in_sec | timeout waiting for Neutron port being ready | default to 15 seconds | 
 | region | region in OpenStack Neutron system | default to "ReegionOne" |
+
+## Deployment & ReplcaSet
+With the Alkaid network controller in place (whose sole responsibility is to ensur eport id for each nic in pod spec), replicaSet & deployment are possible in Alktron, which makes use of rich and efficeint network providings from Neutron.
+
+Below is an depoloyment yaml sample we verified working properly in onebox test env (demo-subnet is one subnet inside demo project)
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-nginx
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+        ports:
+        - containerPort: 80
+      vpc: demo
+      nics:
+        - subnetName: demo-subnet
+          name: eth0
+```
