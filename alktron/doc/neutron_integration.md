@@ -3,7 +3,7 @@ Alktron is the cni plugin integrating with OpenStack Neutron service. Alktron is
 
 In Kubernetes/Alkaid, some terms are significant for vnic, and of diffent names in Neutron, as below:
 
-| pod.spec | Nuetron | notes |
+| pod.spec | Neutron | notes |
 | --- | --- | --- |
 | tenant | domain | tenant of Alkaid (current only default tenant is support; multi tenancy support is on radar) |
 | vpc | project | VPC of a tenant in Alkaid |
@@ -26,7 +26,7 @@ This json file specifies the connection configuration for Alktron to talk to Neu
 | region | region in OpenStack Neutron system | default to "ReegionOne" |
 
 ## Deployment & ReplcaSet
-With the Alkaid network controller in place (whose sole responsibility is to ensur eport id for each nic in pod spec), replicaSet & deployment are possible in Alktron, which makes use of rich and efficeint network providings from Neutron.
+With the Alkaid network controller in place (whose sole responsibility is to ensure port id for each nic in pod spec), replicaSet & deployment are possible in Alktron, which makes use of rich and efficient network providings from Neutron.
 
 Below is an depoloyment yaml sample we verified working properly in onebox test env (demo-subnet is one subnet inside demo project)
 ```yaml
