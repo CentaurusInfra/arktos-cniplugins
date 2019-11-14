@@ -3,6 +3,7 @@ package nsvtep
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/futurewei-cloud/cniplugins/alktron/ovsplug"
@@ -102,7 +103,10 @@ func configNet(devTemp, dev string, mac net.HardwareAddr, ipnet *net.IPNet, gw *
 		Priority: prio,
 	}
 	if err := netlink.RouteAdd(defRoute); err != nil {
-		return fmt.Errorf("failed to configure nic, unable to add default route %q: %v", defRoute.String(), err)
+		// fine if route entry already exists
+		if !strings.Contains(err.Error(), "file exists") {
+			return fmt.Errorf("failed to configure nic, unable to add default route %q: %v", defRoute.String(), err)
+		}
 	}
 
 	return nil

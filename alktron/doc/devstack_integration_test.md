@@ -123,3 +123,64 @@ export CNI_COMMAND=DEL
 cat /etc/cni/net.d/mynet.conf | /opt/cni/bin/alktron
 ip netns del x
 ```
+
+## Hotplug support
+alktron supports vnic hotplug (plug in/out). Following illustrates the hotplug capacity:
+
+* set up eth0, mostly following the known instructions of Add op section, except for
+```bash
+export CNI_ARGS='VPC=demo;NICs=[{"name":"eth0","portid":"f8a6471c-249a-4cd4-ad49-914bfdd95da1"}]'
+export CNI_IFNAME=eth0
+```
+after running cat /etc/cni/net.d/mynet.conf | /opt/cni/bin/alktron, netns x has eth0 nic.
+
+* hotplug plug in eth1
+
+assuming another port available in Neutron, with id "d33870c3-5273-4dcc-9961-6c1ab4435874"
+```bash
+export CNI_ARGS='VPC=demo;NICs=[{"name":"eth1","portid":"d33870c3-5273-4dcc-9961-6c1ab4435874"}]'
+export CNI_IFNAME=eth1
+cat /etc/cni/net.d/mynet.conf | /opt/cni/bin/alktron
+```
+now netns x should have 2 nics: eth0, eth1
+e.g.
+```text
+# ip netns exec x ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+42: eth0@if41: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether fa:16:3e:2c:11:5d brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 10.0.0.14/26 brd 10.0.0.63 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fd03:4915:72b1:0:f816:3eff:fe2c:115d/64 scope global mngtmpaddr dynamic 
+       valid_lft 86397sec preferred_lft 14397sec
+    inet6 fe80::f816:3eff:fe2c:115d/64 scope link 
+       valid_lft forever preferred_lft forever
+47: eth1@if46: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether fa:16:3e:aa:e4:49 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 10.0.0.21/26 brd 10.0.0.63 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fd03:4915:72b1:0:f816:3eff:feaa:e449/64 scope global mngtmpaddr dynamic 
+       valid_lft 86397sec preferred_lft 14397sec
+    inet6 fe80::f816:3eff:feaa:e449/64 scope link 
+       valid_lft forever preferred_lft forever
+```
+
+* hotplug plug out eth1
+```bash
+export CNI_COMMAND=DEL
+cat /etc/cni/net.d/mynet.conf | /opt/cni/bin/alktron
+```
+now netns x has only eth0; eth1 has been gone.
+
+* remove eth0
+```bash
+export CNI_ARGS='VPC=demo;NICs=[{"name":"eth0","portid":"f8a6471c-249a-4cd4-ad49-914bfdd95da1"}]'
+export CNI_IFNAME=eth0
+cat /etc/cni/net.d/mynet.conf | /opt/cni/bin/alktron
+```
+netns x is left with lo only.
