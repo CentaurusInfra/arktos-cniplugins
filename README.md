@@ -1,5 +1,5 @@
 # cni plugins
-This project hosts two cni plugins developed for [alkaid](https://github.com/futurewei-cloud/alkaid.git)
+This project hosts two cni plugins developed for [arktos](https://github.com/futurewei-cloud/arktos.git)
 1. [alktron](alktron) - cni plugin to integrate with OpenStack Neutron
 1. [mizni](mizni) - cni plugin to integrate with the high-performance high-scale network backend including control plane [alcor](https://github.com/futurewei-cloud/AlcorControlAgent.git) and data plane [mizar](https://github.com/futurewei-cloud/Mizar.git). 
 

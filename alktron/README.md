@@ -1,7 +1,7 @@
 # alktron
-[cni](https://github.com/containernetworking/cni/blob/master/SPEC.md) plugin integrating [alkaid](https://github.com/futurewei-cloud/alkaid.git) with [neutron](https://github.com/openstack/neutron)
+[cni](https://github.com/containernetworking/cni/blob/master/SPEC.md) plugin integrating [arktos](https://github.com/futurewei-cloud/arktos.git) with [neutron](https://github.com/openstack/neutron)
 
-See [design spec](https://github.com/futurewei-cloud/alkaid/blob/master/docs/design-proposals/network/NICAndVPCSupportInAlkaid.md) for broader information of project background, design considerations, and impacts upon other components.
+See [design spec](https://github.com/futurewei-cloud/arktos/blob/master/docs/design-proposals/network/NICAndVPCSupportInArktos.md) for broader information of project background, design considerations, and impacts upon other components.
 
 ## target cni version
 0.3.1

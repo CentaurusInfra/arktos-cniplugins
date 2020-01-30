@@ -1,7 +1,7 @@
 # mizni
-[cni](https://github.com/containernetworking/cni/blob/master/SPEC.md) plugin integrating the new network control plane [alcor](https://github.com/futurewei-cloud/AlcorControlAgent.git) and data plane [mizar](https://github.com/futurewei-cloud/Mizar.git) into [alkaid](https://github.com/futurewei-cloud/alkaid.git)
+[cni](https://github.com/containernetworking/cni/blob/master/SPEC.md) plugin integrating the new network control plane [alcor](https://github.com/futurewei-cloud/AlcorControlAgent.git) and data plane [mizar](https://github.com/futurewei-cloud/Mizar.git) into [arktos](https://github.com/futurewei-cloud/arktos.git)
 
-See [design spec](https://github.com/futurewei-cloud/alkaid/blob/master/docs/design-proposals/network/NICAndVPCSupportInAlkaid.md) for broader information of project background, design considerations, and impacts upon other components.
+See [design spec](https://github.com/futurewei-cloud/arktos/blob/master/docs/design-proposals/network/NICAndVPCSupportInArktos.md) for broader information of project background, design considerations, and impacts upon other components.
 
 ## target cni version
 0.3.1
