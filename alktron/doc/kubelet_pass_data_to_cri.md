@@ -4,7 +4,7 @@ alktron, as a cni plugion, is expecting neutron port related information from th
 ```
 ...;VPC=demo;NICs=[{"portid":"93881c89-89ce-407e-a775-d8d3319431d5"}]
 ```
-See [alktron design spec](https://github.com/futurewei-cloud/alkaid/blob/master/docs/design-proposals/network/NICAndVPCSupportInAlkaid.md) for detail.
+See [alktron design spec](https://github.com/futurewei-cloud/arktos/blob/master/docs/design-proposals/network/NICAndVPCSupportInArktos.md) for detail.
 
 
 It is CRI runtime's responsibility to pass proper cni args to alktron. CRI runtime can have its own way to interact with cni plugin. For instance, virlet adds multi-ip-preferences under pod.metadata.annotations (see [multi-cni pod yaml](https://github.com/Mirantis/virtlet/blob/master/examples/ubuntu-multi-cni.yaml)) to explicitly support multi cni types. For Alktron cni plugin, we expect CRI to pass on the needed data as called out in our design spec.
